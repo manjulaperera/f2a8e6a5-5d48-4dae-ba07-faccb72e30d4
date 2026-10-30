@@ -51,6 +51,11 @@ for WR and KR is reproduced.
 20. **Given** WR is ranked Alice, Bob, Charlie, **When** the manager adds Alice at WR and omits the depth, **Then** WR is ranked Bob, Charlie, Alice, and Alice appears once.
 21. **Given** WR is ranked Alice, Bob, Charlie, **When** the manager adds Dana at WR depth 10, **Then** WR is ranked Alice, Bob, Charlie, Dana.
 22. **Given** WR is ranked Alice, Bob, Charlie, **When** the manager adds Alice at WR depth 10, **Then** WR is ranked Bob, Charlie, Alice, and Alice appears once.
+23. **Given** WR is ranked Alice, Bob, Charlie and Bob is already at depth 1, **When** the manager adds Bob at WR depth 1, **Then** WR remains Alice, Bob, Charlie, and Bob appears once.
+24. **Given** an empty NFL chart, **When** the manager adds Bob at WR depth 5, **Then** WR is ranked Bob at depth 0.
+25. **Given** Bob is ranked at WR, **When** the manager adds Bob at WR at a depth below 0, **Then** the request is rejected and Bob remains at WR.
+26. **Given** any chart, **When** the manager adds a player at a null position, **Then** the request is rejected and every ranking stays unchanged.
+27. **Given** any chart, **When** the manager adds a null player at WR, **Then** the request is rejected and every ranking stays unchanged.
 
 ---
 
@@ -80,6 +85,10 @@ other position is unchanged.
 7. **Given** Bob is ranked at KR and is not ranked at WR, **When** the manager removes Bob from WR, **Then** the request is rejected, WR is unchanged, and Bob remains at KR.
 8. **Given** an empty NFL chart, **When** the manager removes a player from WR, **Then** the request is rejected and the chart stays empty.
 9. **Given** an NFL chart, **When** the manager removes a player from SP or from a position code that is not an NFL position, **Then** the request is rejected and every ranking stays unchanged.
+10. **Given** Bob (player id 1, name Bob) is ranked at WR, **When** the manager removes a different record with player id 1 and name Robert from WR, **Then** WR has no players.
+11. **Given** Alice (player id 2, name Alex) is ranked at WR, **When** the manager removes a record with player id 4 and name Alex from WR, **Then** WR still ranks player id 2.
+12. **Given** any chart, **When** the manager removes a null player from WR, **Then** the request is rejected and every ranking stays unchanged.
+13. **Given** any chart, **When** the manager removes a player from a null position, **Then** the request is rejected and every ranking stays unchanged.
 
 ---
 
@@ -130,6 +139,10 @@ Bob then Charlie, Charlie only, and no players.
 4. **Given** Bob is ranked at WR and at KR, and another player is ranked below Bob only at KR, **When** the manager retrieves the players below Bob at WR, **Then** the result includes only players below Bob at WR.
 5. **Given** Alice is not ranked at WR, **When** the manager retrieves the players below Alice at WR, **Then** the request is rejected and every ranking stays unchanged.
 6. **Given** an NFL chart, **When** the manager retrieves the players below a player at SP or at a position code that is not an NFL position, **Then** the request is rejected and every ranking stays unchanged.
+7. **Given** WR is ranked Bob (player id 1) then Charlie (player id 3), **When** the manager retrieves the players below a different record with player id 1 and a different name at WR, **Then** the result is player id 3.
+8. **Given** Alice (player id 2, name Alex) is ranked at WR, **When** the manager retrieves the players below a record with player id 4 and name Alex at WR, **Then** the request is rejected and WR stays unchanged.
+9. **Given** any chart, **When** the manager retrieves the players below a null player at WR, **Then** the request is rejected and every ranking stays unchanged.
+10. **Given** any chart, **When** the manager retrieves the players below a player at a null position, **Then** the request is rejected and every ranking stays unchanged.
 
 ---
 
@@ -158,6 +171,7 @@ depth choices. An NFL position name is rejected on that chart.
 4. **Given** that sport's chart, **When** the manager adds a player at WR, **Then** the request is rejected and the chart stays unchanged.
 5. **Given** equivalent sequences on an NFL chart and on this other sport's chart, **When** the manager compares the resulting rankings, **Then** the order of players matches and no extra sport-specific ranking rule has applied.
 6. **Given** a separate NFL chart and a separate MLB chart, **When** the manager adds the same player id at WR on the NFL chart and at CF on the MLB chart, **Then** both charts rank that player id.
+7. **Given** that same player id is ranked on both charts, **When** the manager removes the player from WR on the NFL chart, **Then** the MLB chart still ranks that player at CF.
 
 ---
 
@@ -176,11 +190,14 @@ depth choices. An NFL position name is rejected on that chart.
 - Empty chart: full-chart retrieval returns an empty collection.
 - Same player already ranked at that position: the entry moves, the player appears once, and the other players keep their relative order. An omitted depth, or a depth at or past the current count, places that player last.
 - Depth greater than the number of players at that position, for a player not already ranked there: the player is appended. No empty depth is created.
-- Negative depth: rejected, chart unchanged.
-- Position from the other sport, an unknown code, or a different capitalisation of a valid code: rejected, chart unchanged.
-- Missing player, missing player id, or blank name: rejected, chart unchanged.
-- Remove, or ask for players below, a player who is not ranked at that position: rejected, chart unchanged.
-- Same player id on a separate chart for another sport: both charts may rank that player.
+- Re-adding a player at the depth they already occupy: the position ranking stays unchanged and the player still appears once.
+- A depth below 0, including for a player already ranked at that position: rejected, and that ranking stays unchanged.
+- A depth greater than 0 on a position with no players: the player is appended and occupies depth 0.
+- Position from the other sport, an unknown code, a different capitalisation of a valid code, or a null position: rejected, chart unchanged.
+- Missing player, missing player id, blank name, or a null player, on add, remove, or players-below: rejected, chart unchanged.
+- Remove, or ask for players below, a player who is not ranked at that position: rejected, chart unchanged. The result is not an empty collection and the removal is not a no-op.
+- Removal and players-below match the player id. A different record with the same player id matches. A different player id with the same name does not match.
+- Same player id on a separate chart for another sport: both charts may rank that player. Removing the player from one chart leaves the other chart unchanged.
 - Non-empty full chart: only positions with at least one player appear, in the sport's published order. NFL order is QB, WR, RB, TE, K, P, KR, PR. MLB order is SP, RP, C, 1B, 2B, 3B, SS, LF, RF, CF, DH. This inclusion rule is an assumption.
 
 ## Requirements *(mandatory)*
@@ -203,12 +220,13 @@ depth choices. An NFL position name is rejected on that chart.
 - **FR-014**: When the player is not already ranked at that position and the requested depth is greater than the number of players currently ranked there, the player MUST be appended after those players. The ranking MUST NOT gain an empty depth.
 - **FR-015**: When the depth chart has no players, retrieval of the full chart MUST return an empty collection. When the chart has one or more players, the full chart MUST include only positions that have at least one player, ordered as the sport publishes them: NFL QB, WR, RB, TE, K, P, KR, PR; MLB SP, RP, C, 1B, 2B, 3B, SS, LF, RF, CF, DH. A position with no players MUST be omitted. The order of entry MUST NOT change that position order.
 - **FR-016**: A depth below 0 MUST be rejected.
-- **FR-017**: A position that is not one of the chart's sport positions MUST be rejected, including a position from another sport and a code that differs in capitalisation from the sport's position.
-- **FR-018**: A missing player, a player without a player id, or a player with a blank name MUST be rejected.
+- **FR-017**: A position that is not one of the chart's sport positions MUST be rejected, including a null position, a position from another sport, and a code that differs in capitalisation from the sport's position.
+- **FR-018**: On add, remove, and players-below, a null player, a missing player, a player without a player id, or a player with a blank name MUST be rejected.
 - **FR-019**: Removing a player who is not ranked at the named position MUST be rejected. This includes a player who is ranked only at a different position.
 - **FR-020**: Retrieving players below a player who is not ranked at the named position MUST be rejected.
 - **FR-021**: Every rejected request MUST leave every position's ranking unchanged.
-- **FR-022**: Two player records with the same player id MUST be treated as the same player. Name and natural position MUST NOT create a second player.
+- **FR-022**: Two player records with the same player id MUST be treated as the same player, including when they are not the same record. Name and natural position MUST NOT create a second player. Two records with different player ids MUST be treated as different players even when their names match. Removal and players-below MUST match by player id.
+- **FR-023**: A change to one depth chart MUST leave every other depth chart unchanged. This includes removing a player id from one sport's chart while that player id remains on another sport's chart.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -241,7 +259,8 @@ depth choices. An NFL position name is rejected on that chart.
 - A player who is not on the named position cannot be removed from it, and has no players below them there. Both requests are rejected and the chart stays unchanged (FR-019, FR-020). A no-op removal and an empty players-below result were proposed for these cases. They are not used, because this specification already rejects both requests.
 - A chart with no players returns an empty collection from full-chart retrieval. That empty-chart result is an assumption.
 - The same player id may be ranked on separate charts for different sports. Each chart still accepts only its own sport's positions.
-- Player identity is the player id. Two records with the same player id are the same player even when they are distinct records. Name and natural position do not create a second player.
+- Player identity is the player id, not the record supplied by the caller. Two records with the same player id are the same player even when they are distinct records. Two records with different player ids are different players even when the name matches. Removal and players-below use that identity.
+- A null player is rejected on add, remove, and players-below, and the chart stays unchanged. A null position is rejected on add, remove, and players-below, and the chart stays unchanged.
 - Position codes match the sport's codes exactly. `wr` is not the NFL position `WR`.
 - A player name is required and must not be blank. Player id is required. A missing player is rejected. The source model includes both name and player id.
 - The chart does not order players by skill, statistics, health, or status. Order changes only when a manager adds or removes a player.
