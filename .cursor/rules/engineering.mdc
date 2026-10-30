@@ -1,0 +1,70 @@
+---
+description: Engineering standards for the depth chart coding challenge
+alwaysApply: true
+---
+
+# Engineering Standards
+
+## Specification-Driven Development
+
+- Follow the approved specification and technical plan.
+- Do not implement functionality outside the approved scope.
+- Clarify ambiguous requirements before implementation.
+- Keep implementation tasks small and independently verifiable.
+
+## Test-Driven Development
+
+Use strict Red-Green-Refactor:
+
+1. Write a failing test.
+2. Run the test and verify it fails for the expected reason.
+3. Implement the minimum production code required.
+4. Run the test suite.
+5. Refactor without changing observable behaviour.
+6. Run the complete test suite again.
+
+Never generate an entire feature and its tests in one step.
+
+## Architecture
+
+- Use C# and .NET 10.
+- Follow SOLID principles.
+- Prefer simple domain modelling.
+- Avoid unnecessary abstractions.
+- Do not introduce APIs, databases or user interfaces.
+- Use dependency injection only where it adds value.
+
+## Code Quality
+
+- Enable nullable reference types.
+- Enable implicit usings.
+- Treat compiler warnings as errors.
+- Use meaningful names.
+- Keep methods focused.
+- Prefer deterministic behaviour.
+- Avoid unnecessary dependencies.
+
+## Testing
+
+- Use xUnit.
+- Cover normal behaviour, edge cases and invalid inputs.
+- Verify behaviour rather than implementation details.
+- Keep tests independent.
+- Do not modify tests merely to make an incorrect implementation pass.
+
+## Git
+
+- Never commit automatically.
+- The developer controls all commits.
+- Never amend or squash commits without approval.
+- Never add Co-authored-by trailers.
+- Never attribute commits to Copilot, Cursor or Claude.
+- Never rewrite Git history without explicit approval.
+
+## AI Collaboration
+
+- Explain proposed changes before implementation.
+- Work on one task at a time.
+- Identify assumptions.
+- Explain architectural trade-offs.
+- Request human review at each TDD checkpoint.
