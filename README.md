@@ -51,7 +51,7 @@ Position codes match exactly, including capitalisation. `wr` is not `WR`.
 
 ## Architecture
 
-The production project is `src/DepthCharts`. Unit tests are `tests/DepthCharts.Unit.Tests`. Integration and acceptance tests are `tests/DepthCharts.Integration.Tests`. The solution file is `DepthCharts.slnx`.
+The production library is `src/DepthCharts`. `src/DepthCharts.Console` runs the published sample against that library. Unit tests are `tests/DepthCharts.Unit.Tests`. Integration and acceptance tests are `tests/DepthCharts.Integration.Tests`. The solution file is `DepthCharts.slnx`.
 
 | Type | Responsibility |
 | --- | --- |
@@ -134,6 +134,22 @@ dotnet build DepthCharts.slnx --configuration Release
 Nullable reference types are enabled. Compiler warnings are treated as errors. The class library has no package references.
 
 GitHub Actions, in `.github/workflows/ci.yml`, restores, builds the Release configuration with warnings as errors, checks formatting, then runs the unit tests and the integration tests as separate steps. That workflow runs on pushes and pull requests to `main`.
+
+## Run the sample
+
+```bash
+dotnet run --project src/DepthCharts.Console
+```
+
+The console calls the library with the published adds and prints:
+
+```text
+WR: [2, 1, 3]
+KR: [1]
+[1, 3]
+```
+
+The last line is the players below Alice at WR. The console does not implement ranking rules.
 
 ## Test
 
@@ -238,6 +254,7 @@ A review of the library against the challenge, constitution, specification, and 
 | Path | Contents |
 | --- | --- |
 | `src/DepthCharts` | Production library |
+| `src/DepthCharts.Console` | Console host for the published sample |
 | `tests/DepthCharts.Unit.Tests` | Unit tests for one type or one operation |
 | `tests/DepthCharts.Integration.Tests` | Acceptance tests that combine the public operations |
 | `specs/001-manage-depth-chart` | Specification, plan, and tasks |

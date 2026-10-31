@@ -322,6 +322,15 @@ Do not commit from this task list until the developer asks. When a commit is req
 
 ---
 
+## Phase 13: Console host
+
+**Purpose**: Give a reviewer one command that runs the published sample against the class library.
+
+- [x] T066 Add `src/DepthCharts.Console` as a .NET 10 executable that references `src/DepthCharts/DepthCharts.csproj` and has no package references. The program runs the published sample (Bob at WR depth 0, Alice at WR depth 0, Charlie at WR depth 2, Bob at KR) and prints the full chart and the players below Alice. Add a test in `tests/DepthCharts.Integration.Tests` that runs the console and checks that output. Do not put ranking rules in the console. Add the project to `DepthCharts.slnx`
+  - **Acceptance**: `dotnet run --project src/DepthCharts.Console` prints `WR: [2, 1, 3]`, then `KR: [1]`, then `[1, 3]`. The integration test passes. The library still owns add, remove, and read.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

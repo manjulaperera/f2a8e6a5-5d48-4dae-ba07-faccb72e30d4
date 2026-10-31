@@ -112,14 +112,20 @@ operations with different rules.
 
 ### VIII. No Unnecessary Infrastructure
 
-The solution MUST remain a domain library and its tests. It MUST NOT add a
-database, web API, user interface, hosted service, or other infrastructure the
-specification does not require. It MUST NOT add a dependency that the domain
-and its tests do not need. Premature optimisation is prohibited. A performance
-change MUST wait for a measured need recorded in the specification.
+Ranking behaviour MUST stay in the domain library. The solution MUST NOT add a
+database, web API, graphical user interface, hosted service, or a dependency
+the domain and its tests do not need. Premature optimisation is prohibited. A
+performance change MUST wait for a measured need recorded in the specification.
+
+One console application is allowed at `src/DepthCharts.Console`. Its only job
+is to exercise the public library and print the result. It MUST call
+`DepthChartService`. It MUST NOT contain ranking rules, and it MUST NOT take a
+package dependency.
 
 **Rationale:** Extra infrastructure widens the review surface and obscures the
-depth chart behaviour this challenge is meant to demonstrate.
+depth chart behaviour this challenge is meant to demonstrate. A single console
+host lets a reviewer run the published sample without moving rules out of the
+library.
 
 ### IX. Automated Tests and CI Validation
 
@@ -205,7 +211,8 @@ The repository MUST NOT contain:
 
 - A database or persistence layer.
 - A web API or other network endpoint.
-- A user interface.
+- A graphical user interface. The console host allowed by Principle VIII is the
+  only executable.
 - Optimisations adopted before a measured need is specified.
 
 Both test projects MUST reference xUnit and the production assembly. They MUST
@@ -257,7 +264,10 @@ a change is accepted. GitHub Actions MUST enforce the automated portion of
 these rules, including tests and warnings-as-errors. Any complexity beyond
 these principles MUST be justified in the approved specification or plan.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
+**Version**: 1.2.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
 
 Amendment 1.1.0 separates unit tests from integration and acceptance tests, as
 stated in Principle IX. The ranking rules are unchanged.
+
+Amendment 1.2.0 allows one console application whose only job is to exercise
+the library. Ranking behaviour stays in the domain library.

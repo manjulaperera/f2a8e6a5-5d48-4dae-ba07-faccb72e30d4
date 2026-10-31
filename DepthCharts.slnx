@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/DepthCharts/DepthCharts.csproj" />
+    <Project Path="src/DepthCharts.Console/DepthCharts.Console.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj" />
