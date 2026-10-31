@@ -18,13 +18,10 @@ public sealed class DepthChartService : IDepthChartService
             _rankings[position] = ranking;
         }
 
-        if (depth is null || depth.Value >= ranking.Count)
-        {
-            ranking.Add(player);
-            return;
-        }
-
-        ranking.Insert(depth.Value, player);
+        var index = depth is int requested && requested < ranking.Count
+            ? requested
+            : ranking.Count;
+        ranking.Insert(index, player);
     }
 
     public IReadOnlyList<DepthChartRow> GetFullDepthChart()
