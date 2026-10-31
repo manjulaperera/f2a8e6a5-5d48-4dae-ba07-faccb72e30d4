@@ -112,4 +112,48 @@ public class PlayersBelowTests
         wideReceivers.Position.Should().Be("WR");
         wideReceivers.PlayerIds.Should().Equal(alice.PlayerId);
     }
+
+    [Fact]
+    public void Given_an_empty_chart_When_players_below_a_null_player_are_retrieved_Then_the_player_is_rejected()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+
+        var playersBelow = () => chart.GetPlayersBelow(null!, "WR");
+
+        playersBelow.Should().ThrowExactly<ArgumentNullException>();
+        chart.GetFullDepthChart().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Given_bob_ranked_at_wr_When_players_below_a_null_player_are_retrieved_Then_the_ranking_stays_in_place()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+        chart.AddPlayer(bob, "WR", 0);
+
+        var playersBelow = () => chart.GetPlayersBelow(null!, "WR");
+
+        playersBelow.Should().ThrowExactly<ArgumentNullException>();
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(bob.PlayerId);
+    }
+
+    [Fact]
+    public void Given_bob_ranked_at_wr_When_players_below_bob_are_retrieved_at_a_null_position_Then_the_position_is_rejected()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+        chart.AddPlayer(bob, "WR", 0);
+
+        var playersBelow = () => chart.GetPlayersBelow(bob, null!);
+
+        playersBelow.Should().ThrowExactly<ArgumentException>();
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(bob.PlayerId);
+    }
 }

@@ -104,4 +104,19 @@ public class SportDefinitionTests
         sport.Contains("GK").Should().BeTrue();
         sport.Contains("WR").Should().BeFalse();
     }
+
+    [Fact]
+    public void Given_a_published_position_list_When_the_returned_list_is_changed_Then_the_published_order_stays_unchanged()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR"]);
+
+        if (sport.Positions is List<string> live)
+        {
+            live.Insert(0, "ZZ");
+        }
+
+        sport.Positions.Should().Equal("QB", "WR");
+        sport.Contains("ZZ").Should().BeFalse();
+        sport.Contains("QB").Should().BeTrue();
+    }
 }

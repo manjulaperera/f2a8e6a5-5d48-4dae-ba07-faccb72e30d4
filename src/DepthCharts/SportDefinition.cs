@@ -10,7 +10,7 @@ public sealed class SportDefinition
         "MLB",
         ["SP", "RP", "C", "1B", "2B", "3B", "SS", "LF", "RF", "CF", "DH"]);
 
-    private readonly List<string> _positions;
+    private readonly IReadOnlyList<string> _positions;
 
     public SportDefinition(string name, IEnumerable<string> positions)
     {
@@ -26,7 +26,7 @@ public sealed class SportDefinition
         }
 
         Name = name;
-        _positions = published;
+        _positions = published.AsReadOnly();
     }
 
     public string Name { get; }

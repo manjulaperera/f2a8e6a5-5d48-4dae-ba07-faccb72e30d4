@@ -12,6 +12,7 @@ public sealed class DepthChartService : IDepthChartService
 
     public void AddPlayer(Player player, string position, int? depth = null)
     {
+        RequirePlayer(player);
         RequireSupportedPosition(position);
         RequireNonNegativeDepth(depth);
 
@@ -22,6 +23,9 @@ public sealed class DepthChartService : IDepthChartService
 
     public void RemovePlayer(Player player, string position)
     {
+        RequirePlayer(player);
+        RequireSupportedPosition(position);
+
         var ranking = RankingOrThrow(position, player);
         if (!ranking.Remove(player))
         {
@@ -53,6 +57,9 @@ public sealed class DepthChartService : IDepthChartService
 
     public IReadOnlyList<int> GetPlayersBelow(Player player, string position)
     {
+        RequirePlayer(player);
+        RequireSupportedPosition(position);
+
         var ranking = RankingOrThrow(position, player);
         var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
         if (index < 0)
@@ -61,6 +68,14 @@ public sealed class DepthChartService : IDepthChartService
         }
 
         return ranking.Skip(index + 1).Select(rankedPlayer => rankedPlayer.PlayerId).ToList();
+    }
+
+    private static void RequirePlayer(Player player)
+    {
+        if (player is null)
+        {
+            throw new ArgumentNullException(nameof(player));
+        }
     }
 
     private void RequireSupportedPosition(string position)
