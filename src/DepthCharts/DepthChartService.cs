@@ -18,7 +18,7 @@ public sealed class DepthChartService : IDepthChartService
             _rankings[position] = ranking;
         }
 
-        if (depth is null)
+        if (depth is null || depth.Value >= ranking.Count)
         {
             ranking.Add(player);
             return;
