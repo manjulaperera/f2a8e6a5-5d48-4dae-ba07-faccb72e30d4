@@ -101,4 +101,79 @@ public class RemovePlayerTests
         rows[0].Position.Should().Be("WR");
         rows[0].PlayerIds.Should().Equal(alice.PlayerId);
     }
+
+    [Fact]
+    public void Given_wr_ranked_alice_When_a_different_player_is_removed_Then_the_removal_is_rejected()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var alice = new Player(2, "Alice", "WR");
+        var charlie = new Player(3, "Charlie", "WR");
+        chart.AddPlayer(alice, "WR", 0);
+
+        var removePlayer = () => chart.RemovePlayer(charlie, "WR");
+
+        removePlayer.Should().ThrowExactly<ArgumentException>();
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(alice.PlayerId);
+    }
+
+    [Fact]
+    public void Given_bob_ranked_only_at_kr_When_bob_is_removed_from_wr_Then_the_removal_is_rejected()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+        chart.AddPlayer(bob, "KR");
+
+        var removePlayer = () => chart.RemovePlayer(bob, "WR");
+
+        removePlayer.Should().ThrowExactly<ArgumentException>();
+        var kickReturners = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        kickReturners.Position.Should().Be("KR");
+        kickReturners.PlayerIds.Should().Equal(bob.PlayerId);
+    }
+
+    [Fact]
+    public void Given_an_empty_chart_When_a_player_is_removed_from_wr_Then_the_removal_is_rejected()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+
+        var removePlayer = () => chart.RemovePlayer(bob, "WR");
+
+        removePlayer.Should().ThrowExactly<ArgumentException>();
+        chart.GetFullDepthChart().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Given_bob_ranked_at_wr_When_a_different_record_with_bobs_id_is_removed_Then_wr_has_no_players()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+        chart.AddPlayer(bob, "WR", 0);
+
+        chart.RemovePlayer(new Player(bob.PlayerId, "Robert", "QB"), "WR");
+
+        chart.GetFullDepthChart().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Given_alice_ranked_at_wr_When_another_alex_with_a_different_id_is_removed_Then_the_removal_is_rejected()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var alice = new Player(2, "Alex", "WR");
+        chart.AddPlayer(alice, "WR", 0);
+
+        var removePlayer = () => chart.RemovePlayer(new Player(4, "Alex", "WR"), "WR");
+
+        removePlayer.Should().ThrowExactly<ArgumentException>();
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(alice.PlayerId);
+    }
 }
