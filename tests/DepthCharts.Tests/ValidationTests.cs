@@ -100,4 +100,25 @@ public class ValidationTests
         wideReceivers.Position.Should().Be("WR");
         wideReceivers.PlayerIds.Should().Equal(bob.PlayerId);
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("\t")]
+    [InlineData("   ")]
+    public void Given_bob_ranked_at_wr_When_a_player_with_a_blank_name_is_added_Then_the_name_is_rejected(string? name)
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+        chart.AddPlayer(bob, "WR", 0);
+
+        var addPlayer = () => chart.AddPlayer(new Player(2, name, "WR"), "WR");
+
+        addPlayer.Should().ThrowExactly<ArgumentException>();
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(bob.PlayerId);
+    }
 }

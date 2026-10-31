@@ -80,4 +80,25 @@ public class IntegrationTests
         chart.GetPlayersBelow(alice, "WR").Should().Equal(charlie.PlayerId);
         chart.GetPlayersBelow(bob, "KR").Should().BeEmpty();
     }
+
+    [Fact]
+    public void Given_gk_and_st_When_a_second_player_is_inserted_at_gk_depth_0_Then_that_player_is_first_and_wr_is_rejected()
+    {
+        var chart = new DepthChartService(new SportDefinition("Association Football", ["GK", "ST"]));
+        var bob = new Player(1, "Bob", "GK");
+        var alice = new Player(2, "Alice", "GK");
+        var charlie = new Player(3, "Charlie", "GK");
+        chart.AddPlayer(bob, "GK", 0);
+        chart.AddPlayer(alice, "GK", 0);
+        chart.AddPlayer(charlie, "GK");
+        chart.AddPlayer(bob, "ST");
+
+        var addWideReceiver = () => chart.AddPlayer(alice, "WR");
+
+        addWideReceiver.Should().ThrowExactly<ArgumentException>();
+        var rows = chart.GetFullDepthChart();
+        rows.Select(row => row.Position).Should().Equal("GK", "ST");
+        rows[0].PlayerIds.Should().Equal(alice.PlayerId, bob.PlayerId, charlie.PlayerId);
+        rows[1].PlayerIds.Should().Equal(bob.PlayerId);
+    }
 }

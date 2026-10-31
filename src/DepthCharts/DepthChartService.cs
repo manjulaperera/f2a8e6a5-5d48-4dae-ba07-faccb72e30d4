@@ -76,6 +76,11 @@ public sealed class DepthChartService : IDepthChartService
         {
             throw new ArgumentNullException(nameof(player));
         }
+
+        if (string.IsNullOrWhiteSpace(player.Name))
+        {
+            throw new ArgumentException("Name is required.", nameof(player));
+        }
     }
 
     private void RequireSupportedPosition(string position)

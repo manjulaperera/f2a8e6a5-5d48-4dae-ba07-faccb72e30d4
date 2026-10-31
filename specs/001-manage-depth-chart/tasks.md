@@ -194,11 +194,11 @@ Do not commit from this task list until the developer asks. When a commit is req
 
 ### Null player and blank name
 
-- [ ] T034 [US1] Write failing tests in `tests/DepthCharts.Tests/ValidationTests.cs` that a null player on add throws `ArgumentNullException`, and that a null, empty, or whitespace-only `Name` throws `ArgumentException`, with the previous ranking unchanged
+- [x] T034 [US1] Write failing tests in `tests/DepthCharts.Tests/ValidationTests.cs` that a null player on add throws `ArgumentNullException`, and that a null, empty, or whitespace-only `Name` throws `ArgumentException`, with the previous ranking unchanged
   - **Acceptance**: The new tests fail because the exception type differs or the chart changes. `Name` must not be null, empty, or whitespace.
-- [ ] T035 [US1] Implement those checks in `src/DepthCharts/DepthChartService.cs` before any dictionary mutation
+- [x] T035 [US1] Implement those checks in `src/DepthCharts/DepthChartService.cs` before any dictionary mutation
   - **Acceptance**: The null-player and blank-name tests pass. A valid player is still added.
-- [ ] T036 [US1] Refactor the player checks in `src/DepthCharts/DepthChartService.cs` and `tests/DepthCharts.Tests/ValidationTests.cs` without changing the exception types
+- [x] T036 [US1] Refactor the player checks in `src/DepthCharts/DepthChartService.cs` and `tests/DepthCharts.Tests/ValidationTests.cs` without changing the exception types
   - **Acceptance**: `dotnet test DepthCharts.slnx` passes.
 
 ### Invalid positions
@@ -279,7 +279,7 @@ Do not commit from this task list until the developer asks. When a commit is req
 
 **Independent Test**: Run the published sample end to end. Build a chart whose positions are `GK` and `ST`, shift and append there, reject `WR`, and remove a player from an NFL chart without changing an MLB chart that holds the same player id.
 
-- [ ] T058 [US5] Write failing tests in `tests/DepthCharts.Tests/IntegrationTests.cs` for the published sample, for `GK` then a second player at `GK` depth 0 ranking the second player first, for rejecting `WR` on that sport, and for the same `PlayerId` on an NFL service and an MLB service surviving removal from only the NFL service
+- [x] T058 [US5] Write failing tests in `tests/DepthCharts.Tests/IntegrationTests.cs` for the published sample, for `GK` then a second player at `GK` depth 0 ranking the second player first, for rejecting `WR` on that sport, and for the same `PlayerId` on an NFL service and an MLB service surviving removal from only the NFL service
   - **Acceptance**: The new tests fail if the sample is not `WR` 2, 1, 3 and `KR` 1, if players below Alice are not 1 then 3, or if the MLB chart changes when the NFL chart removes that id. Add the tests before changing production code.
 - [x] T059 [US5] Change `src/DepthCharts/DepthChartService.cs` only if `tests/DepthCharts.Tests/IntegrationTests.cs` is failing. The change must be the minimum that makes those tests pass
   - **Acceptance**: The integration tests pass. If they were already green, production files are unchanged. A custom `SportDefinition` needs no new service type.
