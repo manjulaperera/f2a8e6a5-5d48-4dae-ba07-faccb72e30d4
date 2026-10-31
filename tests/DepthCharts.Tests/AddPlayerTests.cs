@@ -17,4 +17,36 @@ public class AddPlayerTests
         wideReceivers.Position.Should().Be("WR");
         wideReceivers.PlayerIds.Should().Equal(bob.PlayerId);
     }
+
+    [Fact]
+    public void Given_an_empty_wr_depth_chart_When_bob_is_added_with_depth_omitted_Then_wr_contains_bob_at_index_0()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var bob = new Player(1, "Bob", "WR");
+
+        chart.AddPlayer(bob, "WR");
+
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(bob.PlayerId);
+    }
+
+    [Fact]
+    public void Given_wr_ranked_alice_then_bob_When_charlie_is_added_with_depth_omitted_Then_charlie_is_appended()
+    {
+        var sport = new SportDefinition("NFL", ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+        var chart = new DepthChartService(sport);
+        var alice = new Player(2, "Alice", "WR");
+        var bob = new Player(1, "Bob", "WR");
+        var charlie = new Player(3, "Charlie", "WR");
+        chart.AddPlayer(alice, "WR", 0);
+        chart.AddPlayer(bob, "WR", 1);
+
+        chart.AddPlayer(charlie, "WR");
+
+        var wideReceivers = chart.GetFullDepthChart().Should().ContainSingle().Subject;
+        wideReceivers.Position.Should().Be("WR");
+        wideReceivers.PlayerIds.Should().Equal(alice.PlayerId, bob.PlayerId, charlie.PlayerId);
+    }
 }
