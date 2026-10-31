@@ -18,6 +18,8 @@ public sealed class DepthChartService : IDepthChartService
             _rankings[position] = ranking;
         }
 
+        ranking.Remove(player);
+
         var index = depth is int requested && requested < ranking.Count
             ? requested
             : ranking.Count;
