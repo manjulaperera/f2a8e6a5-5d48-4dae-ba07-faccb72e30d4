@@ -26,6 +26,21 @@ public sealed class DepthChartService : IDepthChartService
         ranking.Insert(index, player);
     }
 
+    public void RemovePlayer(Player player, string position)
+    {
+        if (!_rankings.TryGetValue(position, out var ranking))
+        {
+            return;
+        }
+
+        ranking.Remove(player);
+
+        if (ranking.Count == 0)
+        {
+            _rankings.Remove(position);
+        }
+    }
+
     public IReadOnlyList<DepthChartRow> GetFullDepthChart()
     {
         var rows = new List<DepthChartRow>();
