@@ -12,6 +12,16 @@ public sealed class DepthChartService : IDepthChartService
 
     public void AddPlayer(Player player, string position, int? depth = null)
     {
+        if (position is null || !_sport.Contains(position))
+        {
+            throw new ArgumentException("Position is not supported.", nameof(position));
+        }
+
+        if (depth < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(depth));
+        }
+
         if (!_rankings.TryGetValue(position, out var ranking))
         {
             ranking = [];
