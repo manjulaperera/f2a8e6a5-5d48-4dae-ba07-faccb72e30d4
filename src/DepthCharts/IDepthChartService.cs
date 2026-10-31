@@ -7,4 +7,6 @@ public interface IDepthChartService
     void RemovePlayer(Player player, string position);
 
     IReadOnlyList<DepthChartRow> GetFullDepthChart();
+
+    IReadOnlyList<int> GetPlayersBelow(Player player, string position);
 }

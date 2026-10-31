@@ -56,4 +56,20 @@ public sealed class DepthChartService : IDepthChartService
 
         return rows;
     }
+
+    public IReadOnlyList<int> GetPlayersBelow(Player player, string position)
+    {
+        if (!_rankings.TryGetValue(position, out var ranking))
+        {
+            return [];
+        }
+
+        var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
+        if (index < 0)
+        {
+            return [];
+        }
+
+        return ranking.Skip(index + 1).Select(rankedPlayer => rankedPlayer.PlayerId).ToList();
+    }
 }
