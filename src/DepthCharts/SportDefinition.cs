@@ -2,6 +2,14 @@ namespace DepthCharts;
 
 public sealed class SportDefinition
 {
+    public static SportDefinition Nfl { get; } = new(
+        "NFL",
+        ["QB", "WR", "RB", "TE", "K", "P", "KR", "PR"]);
+
+    public static SportDefinition Mlb { get; } = new(
+        "MLB",
+        ["SP", "RP", "C", "1B", "2B", "3B", "SS", "LF", "RF", "CF", "DH"]);
+
     private readonly List<string> _positions;
 
     public SportDefinition(string name, IEnumerable<string> positions)
