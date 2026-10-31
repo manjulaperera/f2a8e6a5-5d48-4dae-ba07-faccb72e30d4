@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-namespace DepthCharts.Tests;
+namespace DepthCharts.Integration.Tests;
 
 public class IntegrationTests
 {

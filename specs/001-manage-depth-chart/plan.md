@@ -81,16 +81,17 @@ src/DepthCharts/
 ├── IDepthChartService.cs
 └── DepthChartService.cs
 
-tests/DepthCharts.Tests/
-├── DepthCharts.Tests.csproj
-├── PlayerTests.cs
-└── DepthChartServiceTests.cs
+tests/DepthCharts.Unit.Tests/
+└── DepthCharts.Unit.Tests.csproj
+
+tests/DepthCharts.Integration.Tests/
+└── DepthCharts.Integration.Tests.csproj
 
 .github/workflows/
 └── ci.yml
 ```
 
-**Structure Decision**: One class library, `src/DepthCharts`, and one xUnit project, `tests/DepthCharts.Tests`. The solution file is `DepthCharts.slnx`. The library has no `cli`, web, or storage project. GitHub Actions is the CI workflow, not a runtime host. Later production types are added in `src/DepthCharts`. The test project already references FluentAssertions and Moq.
+**Structure Decision**: One class library, `src/DepthCharts`, and two xUnit projects: `tests/DepthCharts.Unit.Tests` and `tests/DepthCharts.Integration.Tests`. The solution file is `DepthCharts.slnx`. The library has no `cli`, web, or storage project. GitHub Actions is the CI workflow, not a runtime host. Later production types are added in `src/DepthCharts`. The unit project references FluentAssertions and Moq. The integration project references FluentAssertions.
 
 ## Complexity Tracking
 

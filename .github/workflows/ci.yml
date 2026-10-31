@@ -20,13 +20,16 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore DepthCharts.slnx
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release --warnaserror
+        run: dotnet build DepthCharts.slnx --no-restore --configuration Release --warnaserror
 
       - name: Verify formatting
-        run: dotnet format --verify-no-changes --no-restore
+        run: dotnet format DepthCharts.slnx --verify-no-changes --no-restore
 
-      - name: Test
-        run: dotnet test --no-restore --configuration Release
+      - name: Unit tests
+        run: dotnet test tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj --configuration Release --no-build --no-restore
+
+      - name: Integration tests
+        run: dotnet test tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj --configuration Release --no-build --no-restore

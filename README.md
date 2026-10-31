@@ -51,7 +51,7 @@ Position codes match exactly, including capitalisation. `wr` is not `WR`.
 
 ## Architecture
 
-The production project is `src/DepthCharts`. The test project is `tests/DepthCharts.Tests`. The solution file is `DepthCharts.slnx`.
+The production project is `src/DepthCharts`. Unit tests are `tests/DepthCharts.Unit.Tests`. Integration and acceptance tests are `tests/DepthCharts.Integration.Tests`. The solution file is `DepthCharts.slnx`.
 
 | Type | Responsibility |
 | --- | --- |
@@ -133,17 +133,22 @@ dotnet build DepthCharts.slnx --configuration Release
 
 Nullable reference types are enabled. Compiler warnings are treated as errors. The class library has no package references.
 
-GitHub Actions, in `.github/workflows/ci.yml`, restores, builds the Release configuration with warnings as errors, checks formatting with `dotnet format --verify-no-changes`, and runs the tests. That workflow runs on pushes and pull requests to `main`.
+GitHub Actions, in `.github/workflows/ci.yml`, restores, builds the Release configuration with warnings as errors, checks formatting, then runs the unit tests and the integration tests as separate steps. That workflow runs on pushes and pull requests to `main`.
 
 ## Test
 
 ```bash
-dotnet test DepthCharts.slnx --configuration Release
+dotnet test tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj --configuration Release
+dotnet test tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj --configuration Release
 ```
 
-Tests are xUnit, named Given/When/Then, and assert with FluentAssertions 7.2.2. `ThrowExactly` is used where a derived exception must not satisfy the test. Moq is referenced for a test that needs to isolate a dependency. The current tests construct `DepthChartService` and players directly and do not use a mock.
+`dotnet test DepthCharts.slnx --configuration Release` runs both projects.
 
-The test project does not reference NHibernate. The chart is in memory and has no database.
+Unit tests cover one type or one operation: `Player`, `SportDefinition`, and each chart operation. Integration tests run the public operations together, including the published challenge sample and more than one chart or sport.
+
+Tests are xUnit, named Given/When/Then, and assert with FluentAssertions 7.2.2. `ThrowExactly` is used where a derived exception must not satisfy the test. Moq is referenced by the unit project for a test that needs to isolate a dependency. The current tests construct `DepthChartService` and players directly and do not use a mock.
+
+Neither test project references NHibernate. The chart is in memory and has no database.
 
 ## Example
 
@@ -233,7 +238,8 @@ A review of the library against the challenge, constitution, specification, and 
 | Path | Contents |
 | --- | --- |
 | `src/DepthCharts` | Production library |
-| `tests/DepthCharts.Tests` | xUnit tests |
+| `tests/DepthCharts.Unit.Tests` | Unit tests for one type or one operation |
+| `tests/DepthCharts.Integration.Tests` | Acceptance tests that combine the public operations |
 | `specs/001-manage-depth-chart` | Specification, plan, and tasks |
 | `.github/workflows/ci.yml` | Build and test workflow |
 | `docs/DepthChartChallenge.md` | Original challenge |

@@ -5,7 +5,7 @@ Validation guide for the library after implementation. This file does not contai
 ## Prerequisites
 
 - .NET 10 SDK
-- The solution described in [plan.md](./plan.md): `src/DepthCharts` and `tests/DepthCharts.Tests`
+- The solution described in [plan.md](./plan.md): `src/DepthCharts`, `tests/DepthCharts.Unit.Tests`, and `tests/DepthCharts.Integration.Tests`
 - No database, web host, or extra package feed
 
 Project settings for both projects:

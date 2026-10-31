@@ -124,13 +124,28 @@ depth chart behaviour this challenge is meant to demonstrate.
 ### IX. Automated Tests and CI Validation
 
 xUnit MUST verify the behaviour required by the specification. GitHub Actions
-MUST run the test suite on the supported branch workflow and MUST fail the
-build when tests fail or the compiler reports warnings. A task is locally
-complete only after the relevant test run passes under the same warning
+MUST run both test projects on the supported branch workflow and MUST fail the
+build when either project fails or the compiler reports warnings. A task is
+locally complete only after the relevant test run passes under the same warning
 settings CI enforces.
 
+Unit tests and integration tests MUST live in separate projects:
+
+- `tests/DepthCharts.Unit.Tests`, namespace `DepthCharts.Unit.Tests`. A unit
+  test covers one type or one operation. `Player`, `SportDefinition`, and each
+  chart operation belong here.
+- `tests/DepthCharts.Integration.Tests`, namespace
+  `DepthCharts.Integration.Tests`. An integration or acceptance test runs the
+  public operations together. The published challenge sample, a chart that uses
+  more than one position, and two charts or sports belong here.
+
+A new test MUST go in the project that matches that boundary. Moq MAY be
+referenced by the unit project only, and only to isolate a dependency. Neither
+project may reference NHibernate or a database package.
+
 **Rationale:** Local Red-Green-Refactor and human review both rely on a shared,
-automated gate.
+automated gate. Separating unit and acceptance tests keeps a single-operation
+failure distinct from a scenario that crosses the public contract.
 
 ### X. Human Review of AI-Generated Code
 
@@ -193,8 +208,9 @@ The repository MUST NOT contain:
 - A user interface.
 - Optimisations adopted before a measured need is specified.
 
-Test projects MUST reference xUnit and the production assembly. They MUST follow
-the same nullable, warning, and determinism rules as production code.
+Both test projects MUST reference xUnit and the production assembly. They MUST
+follow the same nullable, warning, and determinism rules as production code.
+Their folders and namespaces are fixed by Principle IX.
 
 ## Development Workflow
 
@@ -241,4 +257,7 @@ a change is accepted. GitHub Actions MUST enforce the automated portion of
 these rules, including tests and warnings-as-errors. Any complexity beyond
 these principles MUST be justified in the approved specification or plan.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30
+**Version**: 1.1.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
+
+Amendment 1.1.0 separates unit tests from integration and acceptance tests, as
+stated in Principle IX. The ranking rules are unchanged.

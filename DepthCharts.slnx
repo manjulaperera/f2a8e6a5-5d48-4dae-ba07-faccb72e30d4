@@ -3,6 +3,7 @@
     <Project Path="src/DepthCharts/DepthCharts.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/DepthCharts.Tests/DepthCharts.Tests.csproj" />
+    <Project Path="tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj" />
+    <Project Path="tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj" />
   </Folder>
 </Solution>
