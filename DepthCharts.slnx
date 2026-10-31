@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DepthCharts/DepthCharts.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DepthCharts.Tests/DepthCharts.Tests.csproj" />
+  </Folder>
+</Solution>
