@@ -38,12 +38,10 @@ public sealed class DepthChartService : IDepthChartService
 
     public void RemovePlayer(Player player, string position)
     {
-        if (!_rankings.TryGetValue(position, out var ranking))
+        if (!_rankings.TryGetValue(position, out var ranking) || !ranking.Remove(player))
         {
-            return;
+            throw new ArgumentException("Player is not ranked at this position.", nameof(player));
         }
-
-        ranking.Remove(player);
 
         if (ranking.Count == 0)
         {
@@ -71,13 +69,13 @@ public sealed class DepthChartService : IDepthChartService
     {
         if (!_rankings.TryGetValue(position, out var ranking))
         {
-            return [];
+            throw new ArgumentException("Player is not ranked at this position.", nameof(player));
         }
 
         var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
         if (index < 0)
         {
-            return [];
+            throw new ArgumentException("Player is not ranked at this position.", nameof(player));
         }
 
         return ranking.Skip(index + 1).Select(rankedPlayer => rankedPlayer.PlayerId).ToList();
