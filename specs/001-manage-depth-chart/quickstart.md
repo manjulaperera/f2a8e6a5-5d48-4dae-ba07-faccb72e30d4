@@ -5,7 +5,7 @@ Validation guide for the library after implementation. This file does not contai
 ## Prerequisites
 
 - .NET 10 SDK
-- The solution described in [plan.md](./plan.md): `src/DepthChart` and `tests/DepthChart.Tests`
+- The solution described in [plan.md](./plan.md): `src/DepthCharts` and `tests/DepthCharts.Tests`
 - No database, web host, or extra package feed
 
 Project settings for both projects:
@@ -15,7 +15,7 @@ Project settings for both projects:
 - Implicit usings enabled
 - Warnings treated as errors
 
-The class library has no package references. The test project references xUnit, Microsoft.NET.Test.Sdk, and the xUnit runner.
+The class library has no package references. The test project references xUnit, Microsoft.NET.Test.Sdk, the xUnit runner, FluentAssertions 7.2.2, and Moq. New tests use Given/When/Then and FluentAssertions. Moq is for isolating a dependency. The projects do not reference NHibernate.
 
 ## Build and test
 

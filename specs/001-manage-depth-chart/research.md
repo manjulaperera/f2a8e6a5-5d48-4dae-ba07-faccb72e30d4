@@ -44,9 +44,9 @@
 
 ## Test and CI stack
 
-- **Decision**: xUnit is the only test framework. The class library takes no package references. GitHub Actions runs `dotnet test` on the solution with warnings treated as errors.
-- **Rationale**: The constitution requires xUnit and GitHub Actions, and it forbids unused dependencies. An extra assertion package does not add behaviour the specification needs.
-- **Alternatives considered**: FluentAssertions or Shouldly would shorten asserts and would be a third-party dependency the library tests do not need. A hosted test server is infrastructure the specification does not require.
+- **Decision**: xUnit runs the tests. Each test is written as Given/When/Then. Assertions use FluentAssertions 7.2.2, including `ThrowExactly` when the exception type must not be a derived type. Moq is the test-double library when a later test isolates a dependency such as `IDepthChartService`. The class library takes no package references. GitHub Actions runs `dotnet test` on the solution with warnings treated as errors. NHibernate is not used.
+- **Rationale**: The constitution requires xUnit and GitHub Actions. The requested assertion style is FluentAssertions, and Moq is the requested double framework. FluentAssertions 7.2.2 is the last Apache-2.0 release. Version 8 uses a commercial license, which this challenge does not require. NHibernate is an object-relational mapper. The specification keeps the chart in memory and forbids a database, so an ORM would add persistence the solution must not have.
+- **Alternatives considered**: xUnit `Assert` only. That was the earlier plan, and it was replaced when BDD-style assertions were requested. Shouldly was not requested. NHibernate and any other database package stay out of both projects. A hosted test server is infrastructure the specification does not require.
 
 ## Complexity ceiling
 

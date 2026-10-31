@@ -16,11 +16,11 @@ Storage is a private `Dictionary<string, List<Player>>`: the key is the position
 
 **Language/Version**: C# on .NET 10 (`net10.0`)
 
-**Primary Dependencies**: None in the class library. The test project uses xUnit, Microsoft.NET.Test.Sdk, and the xUnit Visual Studio runner. No other packages.
+**Primary Dependencies**: None in the class library. The test project uses xUnit, Microsoft.NET.Test.Sdk, the xUnit Visual Studio runner, FluentAssertions 7.2.2, and Moq. It does not reference NHibernate.
 
 **Storage**: In memory only. One `DepthChartService` instance holds one chart in a `Dictionary<string, List<Player>>`. Nothing is written to disk.
 
-**Testing**: xUnit. Tests assert observable player ids, chart order, and exception types. They do not inspect the private dictionary.
+**Testing**: xUnit tests written in Given/When/Then form. Assertions use FluentAssertions. Moq supplies a test double only when a test must isolate a dependency. Tests assert observable player ids, chart order, and exception types. They do not inspect the private dictionary.
 
 **Target Platform**: Any platform supported by the .NET 10 SDK. Local runs and GitHub Actions both use `dotnet test`.
 
@@ -28,7 +28,7 @@ Storage is a private `Dictionary<string, List<Player>>`: the key is the position
 
 **Performance Goals**: No latency target. A position ranking of 20 players must keep relative order after an insertion at depth 0 and after removal of the player at depth 0 (SC-006). List insertion and removal are O(n) in the size of that position and are accepted.
 
-**Constraints**: Nullable reference types enabled. Implicit usings enabled. Compiler warnings are errors. Returned collections are immutable copies. No third-party domain packages. No persistence, network endpoint, or user interface.
+**Constraints**: Nullable reference types enabled. Implicit usings enabled. Compiler warnings are errors. Returned collections are immutable copies. No third-party packages in the class library. Test-only packages are xUnit, FluentAssertions, and Moq. No persistence, network endpoint, user interface, or NHibernate.
 
 **Scale/Scope**: One sport and one chart per service instance. NFL has 8 positions and MLB has 11. A caller that needs two sports holds two service instances. Position rankings stay small; the specification's volume check is 20 players at one position.
 
@@ -73,23 +73,24 @@ specs/001-manage-depth-chart/
 ### Source Code (repository root)
 
 ```text
-src/DepthChart/
-├── DepthChart.csproj
+src/DepthCharts/
+├── DepthCharts.csproj
 ├── Player.cs
 ├── SportDefinition.cs
 ├── DepthChartRow.cs
 ├── IDepthChartService.cs
 └── DepthChartService.cs
 
-tests/DepthChart.Tests/
-├── DepthChart.Tests.csproj
+tests/DepthCharts.Tests/
+├── DepthCharts.Tests.csproj
+├── PlayerTests.cs
 └── DepthChartServiceTests.cs
 
 .github/workflows/
 └── ci.yml
 ```
 
-**Structure Decision**: One class library, `src/DepthChart`, and one xUnit project, `tests/DepthChart.Tests`. The library has no `cli`, web, or storage project. GitHub Actions is the CI workflow, not a runtime host. These source files are the intended layout. This plan does not create them.
+**Structure Decision**: One class library, `src/DepthCharts`, and one xUnit project, `tests/DepthCharts.Tests`. The solution file is `DepthCharts.slnx`. The library has no `cli`, web, or storage project. GitHub Actions is the CI workflow, not a runtime host. Later production types are added in `src/DepthCharts`. The test project already references FluentAssertions and Moq.
 
 ## Complexity Tracking
 
@@ -185,7 +186,7 @@ A whitespace-only name is treated as blank. The specification requires a blank n
 
 ## Test strategy
 
-Tests are written before the production code that makes them pass, one behaviour at a time: write the test, see it fail for the expected reason, implement the minimum code, then refactor under a green suite. Tests stay independent. Each test constructs its own `DepthChartService` and its own players. Tests call `IDepthChartService` and assert returned ids, row order, and exception type. They do not read the private dictionary.
+Tests are written before the production code that makes them pass, one behaviour at a time: write the test, see it fail for the expected reason, implement the minimum code, then refactor under a green suite. Every test uses Given/When/Then names and sections. Assertions use FluentAssertions. Use `ThrowExactly` when a derived exception must not satisfy the test. Use Moq only when the test isolates a dependency. Do not mock `Player`. Tests stay independent. Each service test constructs its own `DepthChartService` and its own players. Tests call `IDepthChartService` and assert returned ids, row order, and exception type. They do not read the private dictionary.
 
 Coverage required by the specification:
 
@@ -201,7 +202,7 @@ Coverage required by the specification:
 - Rejections: null player, blank name, null position, wrong sport, wrong capitalisation, negative depth, remove of a player who is not there, players-below for a player who is not there. After each rejection the previous ranking is still intact.
 - A custom `SportDefinition` with positions that are neither NFL nor MLB uses the same shift, append, and move outcomes. An NFL code is rejected on that chart.
 
-The test project references xUnit only. It does not add an assertion library. GitHub Actions restores, builds with warnings as errors, and runs `dotnet test`. A warning or a failed test fails the job. The workflow file is part of implementation, not part of this plan's source output.
+The test project references xUnit, FluentAssertions 7.2.2, and Moq. The class library does not. NHibernate is excluded because the chart is in memory and has no database. GitHub Actions restores, builds with warnings as errors, and runs `dotnet test`. A warning or a failed test fails the job. The workflow file is part of implementation, not part of this plan's source output.
 
 ## Extensibility
 
@@ -223,3 +224,4 @@ The approved sports remain NFL and MLB. The custom-sport test proves the extensi
 | Exceptions for rejection | A result object with an error flag | The planning assumptions name `ArgumentNullException`, `ArgumentException`, and `ArgumentOutOfRangeException`. The chart stays unchanged because validation finishes before mutation. |
 | One service instance per chart | A registry of many charts inside one service | The specification's chart belongs to one sport. Two sports are two instances. A registry would be storage the specification does not require. |
 | O(n) scans and shifts | A structure tuned for large n | No measured need exists. The constitution forbids that optimisation before a specification records one. |
+| FluentAssertions and Moq in the test project | xUnit `Assert` only, or NHibernate | Given/When/Then assertions were requested. Moq is available when a test isolates a dependency. NHibernate maps objects to a database, and this solution has none. |

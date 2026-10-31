@@ -13,7 +13,7 @@ A C#/.NET implementation of an extensible sports depth chart management system.
 - Test-Driven Development
 - SOLID principles
 - AI-assisted development with Cursor
-- Automated testing with xUnit
+- Automated testing with xUnit, FluentAssertions, and Moq
 - GitHub Actions CI
 
 ## Status
