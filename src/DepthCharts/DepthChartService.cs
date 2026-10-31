@@ -10,7 +10,7 @@ public sealed class DepthChartService : IDepthChartService
         _sport = sport;
     }
 
-    public void AddPlayer(Player player, string position, int depth)
+    public void AddPlayer(Player player, string position, int? depth = null)
     {
         if (!_rankings.TryGetValue(position, out var ranking))
         {
@@ -18,7 +18,13 @@ public sealed class DepthChartService : IDepthChartService
             _rankings[position] = ranking;
         }
 
-        ranking.Insert(depth, player);
+        if (depth is null)
+        {
+            ranking.Add(player);
+            return;
+        }
+
+        ranking.Insert(depth.Value, player);
     }
 
     public IReadOnlyList<DepthChartRow> GetFullDepthChart()
