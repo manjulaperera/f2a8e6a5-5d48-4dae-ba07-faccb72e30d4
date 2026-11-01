@@ -36,25 +36,28 @@ A further sport is another instance. Its position list is its published order. I
 
 **Validation owned by this type**: `Contains(position)` is true only for an exact code in `Positions`. Null and any other string are not contained. The service turns a failed check into `ArgumentException`.
 
-## Depth chart storage
+## Depth chart
 
-Owned only by `DepthChartService`. Not part of the public contract.
+`DepthChart` is the aggregate. It is internal to the library. `DepthChartService` constructs one chart and forwards `AddPlayer`, `RemovePlayer`, `GetFullDepthChart`, and `GetPlayersBelow`. The service does not insert, move, or remove players itself.
 
-| Structure | Role |
-| --- | --- |
-| `Dictionary<string, List<Player>>` | Key: position code. Value: ranking from depth 0 at index 0 through the last player. |
+`PositionRanking` is the ordered list of players at one position code. It is internal. It appends, inserts and shifts, moves a player by `PlayerId`, removes and closes the gap, and reports the ids below a player. The chart drops a ranking when its last player is removed.
+
+| Structure | Owner | Role |
+| --- | --- | --- |
+| `Dictionary<string, PositionRanking>` | `DepthChart` | Key: position code. Value: the ranking at that position. |
+| `List<Player>` | `PositionRanking` | Depth 0 at index 0 through the last player. |
 
 **State rules**:
 
-- A new service starts with an empty dictionary.
-- The first accepted add at a position creates the list.
+- A new chart starts with an empty dictionary.
+- The first accepted add at a position creates the ranking.
 - Index `i` is depth `i`. There are no holes.
 - The player at a position appears once. A later add of the same id moves that entry.
 - Removing the last player removes the dictionary key.
 - Keys that are not in the sport definition are never inserted, because validation rejects them first.
 - The dictionary's enumeration order is not the full-chart order.
 
-**Relationships**: One service holds one sport definition and one dictionary. Two sports are two services. Nothing in the model links those dictionaries.
+**Relationships**: One chart holds one sport definition and one dictionary. One service holds one chart. Two sports are two services. Nothing in the model links those charts.
 
 ## DepthChartRow
 

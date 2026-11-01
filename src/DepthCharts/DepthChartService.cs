@@ -1,130 +1,52 @@
 namespace DepthCharts;
 
+/// <summary>
+/// Ranks players for one sport. Each instance is an independent chart.
+/// </summary>
 public sealed class DepthChartService : IDepthChartService
 {
-    private const string PlayerNotRanked = "Player is not ranked at this position.";
+    private readonly DepthChart _chart;
 
-    private readonly SportDefinition _sport;
-    private readonly Dictionary<string, List<Player>> _rankings = new();
-
+    /// <summary>
+    /// Creates an empty chart for the given sport.
+    /// </summary>
+    /// <param name="sport">The sport whose position codes and order this chart uses.</param>
     public DepthChartService(SportDefinition sport)
     {
-        _sport = sport;
+        _chart = new DepthChart(sport);
     }
 
-    public void AddPlayer(Player player, string position, int? depth = null)
-    {
-        RequirePlayer(player);
-        RequireSupportedPosition(position);
-        RequireNonNegativeDepth(depth);
+    /// <summary>
+    /// Adds a player at a depth, or at the end when <paramref name="depth"/> is omitted.
+    /// A player already at the position is moved.
+    /// </summary>
+    /// <param name="player">The player to rank.</param>
+    /// <param name="position">A position code from this chart's sport.</param>
+    /// <param name="depth">Zero-based depth. Null adds the player at the end.</param>
+    public void AddPlayer(Player player, string position, int? depth = null) =>
+        _chart.AddPlayer(player, position, depth);
 
-        var ranking = GetOrCreateRanking(position);
-        ranking.Remove(player);
-        ranking.Insert(InsertionIndex(depth, ranking.Count), player);
-    }
+    /// <summary>
+    /// Removes the player from one position and closes the gap.
+    /// </summary>
+    /// <param name="player">The player to remove.</param>
+    /// <param name="position">A position code from this chart's sport.</param>
+    public void RemovePlayer(Player player, string position) =>
+        _chart.RemovePlayer(player, position);
 
-    public void RemovePlayer(Player player, string position)
-    {
-        RequirePlayer(player);
-        RequireSupportedPosition(position);
+    /// <summary>
+    /// Returns the populated positions in the sport's published order.
+    /// Each row lists player ids from depth 0 downward.
+    /// </summary>
+    /// <returns>A copy of the populated rows. An empty chart returns an empty list.</returns>
+    public IReadOnlyList<DepthChartRow> GetFullDepthChart() => _chart.GetFullDepthChart();
 
-        if (!_rankings.TryGetValue(position, out var ranking))
-        {
-            throw new ArgumentException(PlayerNotRanked, nameof(player));
-        }
-
-        if (!ranking.Remove(player))
-        {
-            throw new ArgumentException(PlayerNotRanked, nameof(player));
-        }
-
-        if (ranking.Count == 0)
-        {
-            _rankings.Remove(position);
-        }
-    }
-
-    public IReadOnlyList<DepthChartRow> GetFullDepthChart()
-    {
-        var rows = new List<DepthChartRow>();
-        foreach (var position in _sport.Positions)
-        {
-            if (!_rankings.TryGetValue(position, out var ranking) || ranking.Count == 0)
-            {
-                continue;
-            }
-
-            var playerIds = ranking.ConvertAll(rankedPlayer => rankedPlayer.PlayerId);
-            rows.Add(new DepthChartRow(position, playerIds));
-        }
-
-        return rows;
-    }
-
-    public IReadOnlyList<int> GetPlayersBelow(Player player, string position)
-    {
-        RequirePlayer(player);
-        RequireSupportedPosition(position);
-
-        if (!_rankings.TryGetValue(position, out var ranking))
-        {
-            throw new ArgumentException(PlayerNotRanked, nameof(player));
-        }
-
-        var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
-        if (index < 0)
-        {
-            throw new ArgumentException(PlayerNotRanked, nameof(player));
-        }
-
-        return ranking.Skip(index + 1).Select(rankedPlayer => rankedPlayer.PlayerId).ToList();
-    }
-
-    private static void RequirePlayer(Player player)
-    {
-        if (player is null)
-        {
-            throw new ArgumentNullException(nameof(player));
-        }
-
-        if (string.IsNullOrWhiteSpace(player.Name))
-        {
-            throw new ArgumentException("Name is required.", nameof(player));
-        }
-    }
-
-    private void RequireSupportedPosition(string position)
-    {
-        if (position is null || !_sport.Contains(position))
-        {
-            throw new ArgumentException("Position is not supported.", nameof(position));
-        }
-    }
-
-    private static void RequireNonNegativeDepth(int? depth)
-    {
-        if (depth < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(depth));
-        }
-    }
-
-    private List<Player> GetOrCreateRanking(string position)
-    {
-        if (!_rankings.TryGetValue(position, out var ranking))
-        {
-            ranking = [];
-            _rankings[position] = ranking;
-        }
-
-        return ranking;
-    }
-
-    private static int InsertionIndex(int? depth, int count)
-    {
-        return depth is int requested && requested < count
-            ? requested
-            : count;
-    }
-
+    /// <summary>
+    /// Returns the player ids ranked strictly below the player at one position.
+    /// </summary>
+    /// <param name="player">The player to look up.</param>
+    /// <param name="position">A position code from this chart's sport.</param>
+    /// <returns>A copy of the ids below that player. The last player returns an empty list.</returns>
+    public IReadOnlyList<int> GetPlayersBelow(Player player, string position) =>
+        _chart.GetPlayersBelow(player, position);
 }

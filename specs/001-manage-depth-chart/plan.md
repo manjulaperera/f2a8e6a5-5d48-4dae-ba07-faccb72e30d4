@@ -8,7 +8,7 @@
 
 ## Summary
 
-Deliver an in-memory C# class library that ranks players on one sport's depth chart. Callers add a player at a zero-based depth, remove a player, read the full chart, and read the players ranked below a named player. NFL and MLB are supplied as `SportDefinition` configuration. A further sport is another `SportDefinition`. The ranking operations live in `DepthChartService` and do not change when a sport is added.
+Deliver an in-memory C# class library that ranks players on one sport's depth chart. Callers add a player at a zero-based depth, remove a player, read the full chart, and read the players ranked below a named player. NFL and MLB are supplied as `SportDefinition` configuration. A further sport is another `SportDefinition`. The ranking operations live on `DepthChart`. `DepthChartService` forwards them, and they do not change when a sport is added.
 
 Storage is a private `Dictionary<string, List<Player>>`: the key is the position code, and the list index is the depth. Outputs are immutable copies of player ids. Invalid input is rejected with the exception named in [research.md](./research.md), and the chart is left unchanged.
 
@@ -107,10 +107,12 @@ Details and validation rules are in [data-model.md](./data-model.md).
 
 - **Player**: Immutable person. `PlayerId` (`int`) is the identity. `Name` is required. `NaturalPosition` is descriptive and does not control chart membership. Two players with the same `PlayerId` are the same player even when the instances differ. Two players with different ids are different even when the names match.
 - **SportDefinition**: Immutable configuration. It carries the sport name and the published position list. NFL is `QB, WR, RB, TE, K, P, KR, PR`. MLB is `SP, RP, C, 1B, 2B, 3B, SS, LF, RF, CF, DH`. A position matches only that exact code.
-- **DepthChartService**: One chart for the `SportDefinition` it was given. It owns the private dictionary. It is the only type that mutates rankings.
+- **DepthChart**: Internal aggregate for the `SportDefinition` it was given. It owns the private dictionary and the ranking rules.
+- **PositionRanking**: Internal ordered list at one position code. It inserts, moves, and removes players.
+- **DepthChartService**: Public entry for one chart. It constructs a `DepthChart` and forwards the four operations.
 - **DepthChartRow**: Immutable result row. `Position` plus the player ids from depth 0 downward. Used only for full-chart output.
 
-`Player` does not know about a chart. `SportDefinition` does not store players. The service is the composition of those two.
+`Player` does not know about a chart. `SportDefinition` does not store players. The chart composes those two. The service does not contain the ranking rules.
 
 ## Public service contract
 
@@ -127,10 +129,13 @@ A second chart is a second `DepthChartService`. Removing a player from an NFL in
 
 ## Data structure selection
 
-Private field:
+Private fields:
 
 ```text
-Dictionary<string, List<Player>>
+DepthChart
+  Dictionary<string, PositionRanking>
+PositionRanking
+  List<Player>
 ```
 
 The dictionary key is the position code. The list is that position's ranking. Index 0 is depth 0. A position with no players has no key. Removing the last player at a position removes the key, so an empty position cannot appear in the full chart.
@@ -207,7 +212,7 @@ The test project references xUnit, FluentAssertions 7.2.2, and Moq. The class li
 
 ## Extensibility
 
-`DepthChartService` receives a `SportDefinition`. It asks that object which positions exist and in what published order. It does not contain `if (sport == "NFL")` branches.
+`DepthChart` receives a `SportDefinition`. It asks that object which positions exist and in what published order. It does not contain `if (sport == "NFL")` branches. `DepthChartService` passes that definition through when it constructs the chart.
 
 Adding a sport means constructing another `SportDefinition` with a name and an ordered position list, then constructing a service with it. The four operations and the dictionary layout stay the same. NFL and MLB are two static definitions in the library so callers do not retype the position lists. They are data, not subclasses.
 

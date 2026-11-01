@@ -6,7 +6,9 @@ The production library is `src/DepthCharts`. `src/DepthCharts.Console` is an int
 | --- | --- |
 | `Player` | Immutable person. `PlayerId` is the identity. `NaturalPosition` is descriptive and does not grant or deny a chart position. |
 | `SportDefinition` | Immutable name and published position list. `Nfl` and `Mlb` are static instances of this type. |
-| `DepthChartService` | One chart. It owns the rankings and applies the same add, remove, and read rules for every sport. |
+| `DepthChart` | Internal aggregate. It owns the rankings and applies the same add, remove, and read rules for every sport. |
+| `PositionRanking` | Internal ordered list at one position. It inserts, moves, and removes players. |
+| `DepthChartService` | Public entry. It constructs one `DepthChart` and forwards the four operations. |
 | `DepthChartRow` | One populated position and its player ids, from depth 0 downward. |
 | `IDepthChartService` | The four operations as a public contract. |
 
@@ -16,7 +18,7 @@ A second sport, or a second team, is a second `DepthChartService`. Two services 
 
 ## Data structures
 
-Rankings are a private `Dictionary<string, List<Player>>`.
+`DepthChart` keeps a private `Dictionary<string, PositionRanking>`. Each `PositionRanking` keeps a `List<Player>`.
 
 - The key is the position code.
 - Index 0 is depth 0. There are no holes.

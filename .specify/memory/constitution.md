@@ -188,6 +188,25 @@ Compliance MUST be tested against those rules:
 aligned with review. Coverage stays on the library the tests are meant to
 measure.
 
+### XIV. Clean Architecture in One Library
+
+The depth chart model MUST live in `src/DepthCharts`. Domain types MUST sit at
+the center of that library. `DepthChartService` MAY call those types. Those
+types MUST NOT call the service, the console, or the tests.
+
+Ranking rules MUST live on the depth chart and on the ranking at one position.
+The service MUST forward the public operations. It MUST NOT own the insert,
+move, remove, or chart-order rules.
+
+The solution MUST stay one class library. A layer MUST be a type in that
+library. The solution MUST NOT add a project, a repository interface, a
+database, or a dependency-injection container for this arrangement.
+`SportDefinition` remains the only sport extension point. The console MUST
+still call `DepthChartService`, as Principle VIII requires.
+
+**Rationale:** The chart is the model that owns ranking. Another project would
+only wrap that model in a layer with no second implementation.
+
 ## Technology and Quality Constraints
 
 The Depth Chart Management solution MUST use:
@@ -210,6 +229,7 @@ Code MUST:
 - Keep classes small and cohesive.
 - Return immutable output collections or defensive copies.
 - Prefer deterministic logic, as required by Principle VI.
+- Keep ranking rules on the depth chart, as required by Principle XIV.
 - Avoid dependencies that Principles III and VIII do not justify.
 
 The repository MUST NOT contain:
@@ -272,7 +292,7 @@ these rules, including tests, warnings-as-errors, and the SonarQube quality
 gate when analysis is enabled. Any complexity beyond these principles MUST be
 justified in the approved specification or plan.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
+**Version**: 1.4.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
 
 Amendment 1.1.0 separates unit tests from integration and acceptance tests, as
 stated in Principle IX. The ranking rules are unchanged.
@@ -283,3 +303,6 @@ the library. Ranking behaviour stays in the domain library.
 Amendment 1.3.0 requires production code and tests to follow the active
 SonarQube quality profile and to be checked against those rules before
 acceptance.
+
+Amendment 1.4.0 places ranking rules on the depth chart inside the existing
+library. The public service forwards those rules. No extra project is added.
