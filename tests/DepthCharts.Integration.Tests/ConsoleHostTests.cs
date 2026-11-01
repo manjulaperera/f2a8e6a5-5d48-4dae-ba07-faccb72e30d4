@@ -45,6 +45,28 @@ public class ConsoleHostTests
     }
 
     [Fact]
+    public async Task Given_menu_numbers_When_a_player_is_added_and_the_chart_is_shown_Then_the_library_result_is_printed()
+    {
+        var output = await RunAsync(
+            """
+            1
+            1
+            Bob
+            WR
+            WR
+
+            3
+            0
+            """);
+
+        output.Should().Be(
+            """
+            Added 1 at WR.
+            WR: [1]
+            """);
+    }
+
+    [Fact]
     public async Task Given_mlb_When_a_player_is_added_at_sp_Then_the_chart_shows_that_position()
     {
         var output = await RunAsync(

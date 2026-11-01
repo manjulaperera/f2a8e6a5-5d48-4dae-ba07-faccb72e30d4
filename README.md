@@ -171,7 +171,23 @@ dotnet tool run dotnet-sonarscanner -- end /d:sonar.token="<token>"
 dotnet run --project src/DepthCharts.Console
 ```
 
-The session starts as an NFL chart and reads commands from standard input. Results are printed on standard output. The prompt is on standard error. Ranking stays in `DepthChartService`. The console only parses a command and calls the library.
+The session starts as an NFL chart. Each turn prints a menu on standard error, then waits for a number or a command. Results are printed on standard output. Ranking stays in `DepthChartService`. The console only collects the parameters and calls the library.
+
+In a terminal the menu uses color: the title is cyan, the sport is yellow, the current positions are dark cyan, the numbers are yellow, and the action names are green. Success messages are green, errors are red, and the chart is cyan. Piped output stays plain text.
+
+```text
+  1  Add a player       place a player at a position
+  2  Remove a player    take a player off one position
+  3  Show the chart     list each position from the top
+  4  Players below      list the ids under a player
+  5  Change sport       NFL, MLB, or your own positions
+  6  Command help       show the one-line commands
+  0  Quit               leave the console
+```
+
+![Menu for an NFL chart](docs/images/console-menu.png)
+
+Choosing a number asks for each parameter with a label. These commands do the same work on one line:
 
 ```text
 sport nfl|mlb
@@ -199,6 +215,12 @@ quit
 ```
 
 `chart` then prints `WR: [2, 1, 3]` and `KR: [1]`. `below 2 WR` prints `[1, 3]`.
+
+![Published sample in the console](docs/images/console-chart.png)
+
+An unknown position is rejected by the library and shown in red. The chart is left unchanged.
+
+![Unsupported position](docs/images/console-error.png)
 
 ## Test
 
@@ -310,6 +332,7 @@ A review of the library against the challenge, constitution, specification, and 
 | `specs/001-manage-depth-chart` | Specification, plan, and tasks |
 | `.github/workflows/ci.yml` | Build, test, and SonarQube analysis |
 | `dotnet-tools.json` | Local SonarScanner for .NET |
+| `docs/images` | Screenshots of the console menu, sample, and an error |
 | `docs/DepthChartChallenge.md` | Original challenge |
 | `docs/code-review.md` | Review notes |
 

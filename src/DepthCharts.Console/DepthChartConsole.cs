@@ -4,27 +4,85 @@ internal static class DepthChartConsole
 {
     public static int Run(TextReader input, TextWriter output, TextWriter error)
     {
-        error.WriteLine("Depth chart. Type help.");
         var session = new Session();
 
         while (true)
         {
-            error.Write("> ");
+            session.WriteMenu(error);
+            WriteColored(error, "> ", ConsoleColor.Cyan, newLine: false);
             error.Flush();
             var line = input.ReadLine();
-            if (line is null || !session.Execute(line.Trim(), output))
+            if (line is null || !session.Execute(line.Trim(), input, output, error))
             {
                 return 0;
             }
         }
     }
 
+    private static void WriteColored(TextWriter writer, string text, ConsoleColor color, bool newLine = true)
+    {
+        var useColor = ReferenceEquals(writer, Console.Out)
+            ? !Console.IsOutputRedirected
+            : ReferenceEquals(writer, Console.Error) && !Console.IsErrorRedirected;
+
+        if (!useColor)
+        {
+            if (newLine)
+            {
+                writer.WriteLine(text);
+            }
+            else
+            {
+                writer.Write(text);
+            }
+
+            return;
+        }
+
+        var previous = Console.ForegroundColor;
+        try
+        {
+            Console.ForegroundColor = color;
+            if (newLine)
+            {
+                writer.WriteLine(text);
+            }
+            else
+            {
+                writer.Write(text);
+            }
+        }
+        finally
+        {
+            Console.ForegroundColor = previous;
+        }
+    }
+
     private sealed class Session
     {
         private readonly Dictionary<int, Player> _players = [];
+        private SportDefinition _sport = SportDefinition.Nfl;
         private DepthChartService _chart = new(SportDefinition.Nfl);
 
-        public bool Execute(string line, TextWriter output)
+        public void WriteMenu(TextWriter error)
+        {
+            error.WriteLine();
+            WriteColored(error, "Depth chart", ConsoleColor.Cyan);
+            WriteColored(error, $"Sport: {_sport.Name}", ConsoleColor.Yellow);
+            WriteColored(error, "Positions: " + string.Join("  ", _sport.Positions), ConsoleColor.DarkCyan);
+            error.WriteLine();
+            WriteMenuItem(error, "1", "Add a player", "place a player at a position");
+            WriteMenuItem(error, "2", "Remove a player", "take a player off one position");
+            WriteMenuItem(error, "3", "Show the chart", "list each position from the top");
+            WriteMenuItem(error, "4", "Players below", "list the ids under a player");
+            WriteMenuItem(error, "5", "Change sport", "NFL, MLB, or your own positions");
+            WriteMenuItem(error, "6", "Command help", "show the one-line commands");
+            WriteMenuItem(error, "0", "Quit", "leave the console");
+            error.WriteLine();
+            WriteColored(error, "Choose a number, or type a command.", ConsoleColor.DarkGray);
+        }
+
+        public bool Execute(string line, TextReader input, TextWriter output, TextWriter error)
         {
             if (line.Length == 0)
             {
@@ -34,18 +92,44 @@ internal static class DepthChartConsole
             var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             switch (parts[0].ToLowerInvariant())
             {
-                case "help":
-                    if (RequireCount(parts, 1, output, "help"))
+                case "0":
+                case "quit":
+                case "exit":
+                    if (parts.Length == 1)
                     {
-                        WriteHelp(output);
+                        return false;
+                    }
+
+                    WriteMessage(output, "Error: Usage: quit", ConsoleColor.Red);
+                    return true;
+                case "1":
+                    return AddFromMenu(parts, input, output, error);
+                case "2":
+                    return PlayerFromMenu(parts, input, output, error, "2", Remove);
+                case "3":
+                    if (parts.Length == 1)
+                    {
+                        WriteChart(output);
+                    }
+                    else
+                    {
+                        WriteMessage(output, "Error: Usage: chart", ConsoleColor.Red);
                     }
 
                     return true;
-                case "quit":
-                case "exit":
-                    if (RequireCount(parts, 1, output, "quit"))
+                case "4":
+                    return PlayerFromMenu(parts, input, output, error, "4", Below);
+                case "5":
+                    return SportFromMenu(parts, input, output, error);
+                case "6":
+                case "help":
+                    if (parts.Length == 1)
                     {
-                        return false;
+                        WriteCommandHelp(error);
+                    }
+                    else
+                    {
+                        WriteMessage(output, "Error: Usage: help", ConsoleColor.Red);
                     }
 
                     return true;
@@ -69,9 +153,88 @@ internal static class DepthChartConsole
                     Below(parts, output);
                     return true;
                 default:
-                    output.WriteLine("Error: Unknown command. Type help.");
+                    WriteMessage(output, "Error: Unknown command. Choose a number from the menu.", ConsoleColor.Red);
                     return true;
             }
+        }
+
+        private bool AddFromMenu(string[] parts, TextReader input, TextWriter output, TextWriter error)
+        {
+            if (parts.Length != 1)
+            {
+                WriteMessage(output, "Error: Enter 1, or use: add <id> <name> <naturalPosition> <position> [depth]", ConsoleColor.Red);
+                return true;
+            }
+
+            var id = ReadPrompt(input, error, "Player id: ");
+            var name = ReadPrompt(input, error, "Name: ");
+            var naturalPosition = ReadPrompt(input, error, "Natural position (- if none): ");
+            var position = ReadPrompt(input, error, "Chart position: ");
+            var depth = ReadPrompt(input, error, "Depth (blank adds at the end): ");
+            if (id is null || name is null || naturalPosition is null || position is null || depth is null)
+            {
+                return false;
+            }
+
+            Add(depth.Length == 0
+                ? ["add", id, name, naturalPosition, position]
+                : ["add", id, name, naturalPosition, position, depth], output);
+            return true;
+        }
+
+        private bool PlayerFromMenu(
+            string[] parts,
+            TextReader input,
+            TextWriter output,
+            TextWriter error,
+            string number,
+            Action<string[], TextWriter> command)
+        {
+            if (parts.Length != 1)
+            {
+                WriteMessage(output, $"Error: Enter {number}, or type the full command.", ConsoleColor.Red);
+                return true;
+            }
+
+            var id = ReadPrompt(input, error, "Player id: ");
+            var position = ReadPrompt(input, error, "Chart position: ");
+            if (id is null || position is null)
+            {
+                return false;
+            }
+
+            command(number == "2" ? ["remove", id, position] : ["below", id, position], output);
+            return true;
+        }
+
+        private bool SportFromMenu(string[] parts, TextReader input, TextWriter output, TextWriter error)
+        {
+            if (parts.Length != 1)
+            {
+                WriteMessage(output, "Error: Enter 5, or use: sport nfl|mlb|<name> <code,code>", ConsoleColor.Red);
+                return true;
+            }
+
+            var sport = ReadPrompt(input, error, "Sport (nfl, mlb, or a new name): ");
+            if (sport is null)
+            {
+                return false;
+            }
+
+            if (sport.Equals("nfl", StringComparison.OrdinalIgnoreCase) || sport.Equals("mlb", StringComparison.OrdinalIgnoreCase))
+            {
+                Sport(["sport", sport], output);
+                return true;
+            }
+
+            var codes = ReadPrompt(input, error, "Position codes, separated by commas: ");
+            if (codes is null)
+            {
+                return false;
+            }
+
+            Sport(["sport", sport, codes], output);
+            return true;
         }
 
         private void Sport(string[] parts, TextWriter output)
@@ -97,27 +260,28 @@ internal static class DepthChartConsole
                 }
                 catch (ArgumentException exception)
                 {
-                    output.WriteLine($"Error: {exception.Message}");
+                    WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
                 }
 
                 return;
             }
 
-            output.WriteLine("Error: Usage: sport nfl|mlb|<name> <code,code>");
+            WriteMessage(output, "Error: Usage: sport nfl|mlb|<name> <code,code>", ConsoleColor.Red);
         }
 
         private void UseSport(SportDefinition sport, TextWriter output)
         {
+            _sport = sport;
             _chart = new DepthChartService(sport);
             _players.Clear();
-            output.WriteLine($"Sport: {sport.Name}.");
+            WriteMessage(output, $"Sport: {sport.Name}.", ConsoleColor.Green);
         }
 
         private void Add(string[] parts, TextWriter output)
         {
             if (parts.Length is not (5 or 6))
             {
-                output.WriteLine("Error: Usage: add <id> <name> <naturalPosition> <position> [depth]");
+                WriteMessage(output, "Error: Usage: add <id> <name> <naturalPosition> <position> [depth]", ConsoleColor.Red);
                 return;
             }
 
@@ -131,7 +295,7 @@ internal static class DepthChartConsole
             {
                 if (!int.TryParse(parts[5], out var parsedDepth))
                 {
-                    output.WriteLine("Error: Depth must be an integer.");
+                    WriteMessage(output, "Error: Depth must be an integer.", ConsoleColor.Red);
                     return;
                 }
 
@@ -144,11 +308,11 @@ internal static class DepthChartConsole
                 var player = new Player(id, parts[2], naturalPosition);
                 _chart.AddPlayer(player, parts[4], depth);
                 _players[id] = player;
-                output.WriteLine($"Added {id} at {parts[4]}.");
+                WriteMessage(output, $"Added {id} at {parts[4]}.", ConsoleColor.Green);
             }
             catch (ArgumentException exception)
             {
-                output.WriteLine($"Error: {exception.Message}");
+                WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
             }
         }
 
@@ -162,11 +326,11 @@ internal static class DepthChartConsole
             try
             {
                 _chart.RemovePlayer(player, position);
-                output.WriteLine($"Removed {player.PlayerId} from {position}.");
+                WriteMessage(output, $"Removed {player.PlayerId} from {position}.", ConsoleColor.Green);
             }
             catch (ArgumentException exception)
             {
-                output.WriteLine($"Error: {exception.Message}");
+                WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
             }
         }
 
@@ -180,11 +344,11 @@ internal static class DepthChartConsole
             try
             {
                 var ids = _chart.GetPlayersBelow(player, position);
-                output.WriteLine($"[{string.Join(", ", ids)}]");
+                WriteMessage(output, $"[{string.Join(", ", ids)}]", ConsoleColor.Yellow);
             }
             catch (ArgumentException exception)
             {
-                output.WriteLine($"Error: {exception.Message}");
+                WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
             }
         }
 
@@ -192,7 +356,7 @@ internal static class DepthChartConsole
         {
             foreach (var row in _chart.GetFullDepthChart())
             {
-                output.WriteLine($"{row.Position}: [{string.Join(", ", row.PlayerIds)}]");
+                WriteMessage(output, $"{row.Position}: [{string.Join(", ", row.PlayerIds)}]", ConsoleColor.Cyan);
             }
         }
 
@@ -217,7 +381,7 @@ internal static class DepthChartConsole
 
             if (!_players.TryGetValue(id, out var stored))
             {
-                output.WriteLine($"Error: Add player {id} before using that id.");
+                WriteMessage(output, $"Error: Add player {id} before using that id.", ConsoleColor.Red);
                 return false;
             }
 
@@ -233,7 +397,7 @@ internal static class DepthChartConsole
                 return true;
             }
 
-            output.WriteLine("Error: Player id must be an integer.");
+            WriteMessage(output, "Error: Player id must be an integer.", ConsoleColor.Red);
             return false;
         }
 
@@ -244,23 +408,41 @@ internal static class DepthChartConsole
                 return true;
             }
 
-            output.WriteLine($"Error: Usage: {usage}");
+            WriteMessage(output, $"Error: Usage: {usage}", ConsoleColor.Red);
             return false;
         }
 
-        private static void WriteHelp(TextWriter output)
+        private static string? ReadPrompt(TextReader input, TextWriter error, string label)
         {
-            output.WriteLine(
-                """
-                sport nfl|mlb
-                sport <name> <code,code>
-                add <id> <name> <naturalPosition> <position> [depth]
-                remove <id> <position>
-                chart
-                below <id> <position>
-                help
-                quit
-                """);
+            WriteColored(error, label, ConsoleColor.DarkCyan, newLine: false);
+            error.Flush();
+            return input.ReadLine()?.Trim();
+        }
+
+        private static void WriteMenuItem(TextWriter error, string number, string title, string description)
+        {
+            WriteColored(error, $"  {number}  ", ConsoleColor.Yellow, newLine: false);
+            WriteColored(error, title.PadRight(20), ConsoleColor.Green, newLine: false);
+            WriteColored(error, description, ConsoleColor.DarkGray);
+        }
+
+        private static void WriteCommandHelp(TextWriter error)
+        {
+            error.WriteLine();
+            WriteColored(error, "One-line commands", ConsoleColor.Cyan);
+            WriteColored(error, "add <id> <name> <naturalPosition> <position> [depth]", ConsoleColor.Gray);
+            WriteColored(error, "remove <id> <position>", ConsoleColor.Gray);
+            WriteColored(error, "chart", ConsoleColor.Gray);
+            WriteColored(error, "below <id> <position>", ConsoleColor.Gray);
+            WriteColored(error, "sport nfl", ConsoleColor.Gray);
+            WriteColored(error, "sport mlb", ConsoleColor.Gray);
+            WriteColored(error, "sport <name> <code,code>", ConsoleColor.Gray);
+            WriteColored(error, "A name is one word. Use - when there is no natural position.", ConsoleColor.DarkGray);
+        }
+
+        private static void WriteMessage(TextWriter output, string text, ConsoleColor color)
+        {
+            WriteColored(output, text, color);
         }
     }
 }
