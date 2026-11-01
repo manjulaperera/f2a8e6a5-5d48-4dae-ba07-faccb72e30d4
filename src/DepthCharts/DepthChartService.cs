@@ -26,7 +26,11 @@ public sealed class DepthChartService : IDepthChartService
         RequirePlayer(player);
         RequireSupportedPosition(position);
 
-        var ranking = RankingOrThrow(position, player);
+        if (!_rankings.TryGetValue(position, out var ranking))
+        {
+            throw NotRanked(player);
+        }
+
         if (!ranking.Remove(player))
         {
             throw NotRanked(player);
@@ -60,7 +64,11 @@ public sealed class DepthChartService : IDepthChartService
         RequirePlayer(player);
         RequireSupportedPosition(position);
 
-        var ranking = RankingOrThrow(position, player);
+        if (!_rankings.TryGetValue(position, out var ranking))
+        {
+            throw NotRanked(player);
+        }
+
         var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
         if (index < 0)
         {
@@ -105,16 +113,6 @@ public sealed class DepthChartService : IDepthChartService
         {
             ranking = [];
             _rankings[position] = ranking;
-        }
-
-        return ranking;
-    }
-
-    private List<Player> RankingOrThrow(string position, Player player)
-    {
-        if (!_rankings.TryGetValue(position, out var ranking))
-        {
-            throw NotRanked(player);
         }
 
         return ranking;
