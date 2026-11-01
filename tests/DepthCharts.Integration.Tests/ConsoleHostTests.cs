@@ -20,7 +20,7 @@ public class ConsoleHostTests
         });
 
         process.Should().NotBeNull();
-        var exited = process!.WaitForExit(TimeSpan.FromMinutes(2));
+        var exited = process.WaitForExit(TimeSpan.FromMinutes(2));
         var output = process.StandardOutput.ReadToEnd();
         var error = process.StandardError.ReadToEnd();
 

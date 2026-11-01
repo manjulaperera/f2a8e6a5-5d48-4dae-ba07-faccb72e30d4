@@ -2,6 +2,8 @@ namespace DepthCharts;
 
 public sealed class DepthChartService : IDepthChartService
 {
+    private const string PlayerNotRanked = "Player is not ranked at this position.";
+
     private readonly SportDefinition _sport;
     private readonly Dictionary<string, List<Player>> _rankings = new();
 
@@ -28,12 +30,12 @@ public sealed class DepthChartService : IDepthChartService
 
         if (!_rankings.TryGetValue(position, out var ranking))
         {
-            throw NotRanked(player);
+            throw new ArgumentException(PlayerNotRanked, nameof(player));
         }
 
         if (!ranking.Remove(player))
         {
-            throw NotRanked(player);
+            throw new ArgumentException(PlayerNotRanked, nameof(player));
         }
 
         if (ranking.Count == 0)
@@ -66,13 +68,13 @@ public sealed class DepthChartService : IDepthChartService
 
         if (!_rankings.TryGetValue(position, out var ranking))
         {
-            throw NotRanked(player);
+            throw new ArgumentException(PlayerNotRanked, nameof(player));
         }
 
         var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
         if (index < 0)
         {
-            throw NotRanked(player);
+            throw new ArgumentException(PlayerNotRanked, nameof(player));
         }
 
         return ranking.Skip(index + 1).Select(rankedPlayer => rankedPlayer.PlayerId).ToList();
@@ -125,8 +127,4 @@ public sealed class DepthChartService : IDepthChartService
             : count;
     }
 
-    private static ArgumentException NotRanked(Player player)
-    {
-        return new ArgumentException("Player is not ranked at this position.", nameof(player));
-    }
 }
