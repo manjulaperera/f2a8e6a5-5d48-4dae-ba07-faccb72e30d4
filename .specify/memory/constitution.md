@@ -1,27 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: unratified template → 1.0.0
-- Modified principles:
-  - [PRINCIPLE_1_NAME] → I. Specification-First Development
-  - [PRINCIPLE_2_NAME] → II. Strict Test-Driven Development (NON-NEGOTIABLE)
-  - [PRINCIPLE_3_NAME] → III. SOLID Without Unnecessary Abstraction
-  - [PRINCIPLE_4_NAME] → IV. Clean Domain Modelling
-  - [PRINCIPLE_5_NAME] → V. Sport Extensibility
-- Added principles:
-  - VI. Deterministic Behaviour
-  - VII. Explicit Validation and Documented Assumptions
-  - VIII. No Unnecessary Infrastructure
-  - IX. Automated Tests and CI Validation
-  - X. Human Review of AI-Generated Code
-  - XI. Incremental Git Commits
-  - XII. No AI Co-Author Attribution
-- Added sections:
-  - Technology and Quality Constraints (replaces [SECTION_2_NAME])
-  - Development Workflow (replaces [SECTION_3_NAME])
-- Removed sections: none
-- Follow-up TODOs: none
--->
-
 # Depth Chart Management Constitution
 
 ## Core Principles
@@ -184,6 +160,34 @@ attribute authorship to Copilot, Cursor, Claude, or any other AI assistant.
 **Rationale:** Authorship records the person who reviewed the change and took
 responsibility for it.
 
+### XIII. SonarQube Rules
+
+Production code and tests MUST comply with the Sonar rules in the project's
+active SonarQube quality profile. An issue that profile enforces MUST be fixed
+before the change is accepted. A rule suppression MUST be justified in the
+approved specification or plan.
+
+Compliance MUST be tested against those rules:
+
+- GitHub Actions MUST run SonarScanner for .NET when the `SONAR_ENABLED`
+  variable is `true`, MUST wait for the quality gate, and MUST fail the job
+  when the gate fails. If analysis is enabled and `SONAR_TOKEN` or
+  `SONAR_HOST_URL` is missing, the job MUST fail.
+- When `SONAR_ENABLED` is not `true`, the workflow MUST still build and run
+  the tests. Skipping the scanner MUST NOT waive the rules. Before acceptance,
+  the change MUST be checked with SonarScanner for .NET, or with
+  `SonarAnalyzer.CSharp` treating warnings as errors. A temporary analyzer
+  reference used only for that check MUST be removed before acceptance.
+- Both test projects MUST be marked `SonarQubeTestProject`.
+- Coverage sent to SonarQube and Coverlet MUST exclude `src/DepthCharts.Console`.
+  The console host is not ranking behaviour.
+- The scanner MUST remain a repository tool. It MUST NOT be a package
+  reference of the domain library or the console host.
+
+**Rationale:** The quality gate is the shared check that static rules stay
+aligned with review. Coverage stays on the library the tests are meant to
+measure.
+
 ## Technology and Quality Constraints
 
 The Depth Chart Management solution MUST use:
@@ -193,6 +197,7 @@ The Depth Chart Management solution MUST use:
 - GitHub Spec Kit for specifications, plans, and tasks.
 - Cursor for AI-assisted editing, subject to Principle X.
 - GitHub Actions for continuous integration.
+- SonarQube, through SonarScanner for .NET, for the rules in Principle XIII.
 
 Project settings MUST:
 
@@ -230,13 +235,15 @@ Work MUST proceed in this order:
 4. Run the test and confirm the failure reason.
 5. Implement the minimum production code that satisfies the test.
 6. Refactor under a green suite.
-7. Request human review of the tests and the production change (Principle X).
-8. Commit only when the developer requests it, as one increment for that task
+7. Confirm the change satisfies the Sonar rules in Principle XIII.
+8. Request human review of the tests and the production change (Principle X).
+9. Commit only when the developer requests it, as one increment for that task
    (Principle XI), with human authorship only (Principle XII).
 
 Production implementation of a behaviour MUST NOT begin before its test exists
 and has been seen to fail for the expected reason. A task MUST NOT be treated
-as accepted before a human has reviewed it and the automated tests pass.
+as accepted before a human has reviewed it, the automated tests pass, and the
+Sonar check in Principle XIII has passed.
 
 ## Governance
 
@@ -261,13 +268,18 @@ Version bumps follow these rules:
 The developer is the approving authority for an amendment. Compliance MUST be
 reviewed when a specification, plan, or task list is produced, and again before
 a change is accepted. GitHub Actions MUST enforce the automated portion of
-these rules, including tests and warnings-as-errors. Any complexity beyond
-these principles MUST be justified in the approved specification or plan.
+these rules, including tests, warnings-as-errors, and the SonarQube quality
+gate when analysis is enabled. Any complexity beyond these principles MUST be
+justified in the approved specification or plan.
 
-**Version**: 1.2.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
+**Version**: 1.3.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-11-01
 
 Amendment 1.1.0 separates unit tests from integration and acceptance tests, as
 stated in Principle IX. The ranking rules are unchanged.
 
 Amendment 1.2.0 allows one console application whose only job is to exercise
 the library. Ranking behaviour stays in the domain library.
+
+Amendment 1.3.0 requires production code and tests to follow the active
+SonarQube quality profile and to be checked against those rules before
+acceptance.
