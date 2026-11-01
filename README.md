@@ -1,5 +1,9 @@
 # Depth Chart Management
 
+[![Build and Test](https://github.com/manjulaperera/f2a8e6a5-5d48-4dae-ba07-faccb72e30d4/actions/workflows/ci.yml/badge.svg)](https://github.com/manjulaperera/f2a8e6a5-5d48-4dae-ba07-faccb72e30d4/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DepthCharts&metric=alert_status)](https://sonarcloud.io/summary/overall?id=DepthCharts)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DepthCharts&metric=coverage)](https://sonarcloud.io/summary/overall?id=DepthCharts)
+
 A .NET 10 class library that ranks players by position for a team sport. It implements the four depth-chart operations from the coding challenge for NFL and MLB, and accepts another sport by configuration.
 
 The library has no database, web API, or user interface. Rankings live in memory for the lifetime of one service instance.
@@ -133,7 +137,33 @@ dotnet build DepthCharts.slnx --configuration Release
 
 Nullable reference types are enabled. Compiler warnings are treated as errors. The class library has no package references.
 
-GitHub Actions, in `.github/workflows/ci.yml`, restores, builds the Release configuration with warnings as errors, checks formatting, then runs the unit tests and the integration tests as separate steps. That workflow runs on pushes and pull requests to `main`.
+GitHub Actions, in `.github/workflows/ci.yml`, restores, builds the Release configuration with warnings as errors, checks formatting, then runs the unit tests and the integration tests as separate steps. The same workflow sends that build to SonarQube. It runs on pushes and pull requests to `main`.
+
+## SonarQube
+
+The SonarQube steps are in `.github/workflows/ci.yml`. The scanner is SonarScanner for .NET 12.0.0, installed from `dotnet-tools.json` during the workflow. It is not a reference of the class library. Analysis wraps the same restore, build, and tests. It runs only when the `SONAR_ENABLED` variable is `true`. Any other value, including an empty one, skips the scanner and still builds and tests. With analysis enabled, the workflow also requires:
+
+- Secret `SONAR_TOKEN`, a SonarQube analysis token.
+- Variable `SONAR_HOST_URL`, the server URL. Use `https://sonarcloud.io` for SonarQube Cloud.
+
+The build fails if analysis is enabled and either of those is missing.
+
+Optional variables:
+
+- `SONAR_PROJECT_KEY`, default `DepthCharts`. Create the project in SonarQube with this key before the first analysis. The badges at the top use this key on SonarQube Cloud.
+- `SONAR_ORGANIZATION`, required for SonarQube Cloud and omitted for SonarQube Server.
+
+When analysis is enabled, the workflow starts the scanner, builds `DepthCharts.slnx`, runs both test projects with Coverlet OpenCover reports, and waits for the quality gate. Test projects are marked `SonarQubeTestProject`. Coverage for `src/DepthCharts.Console` is excluded because that project only prints the published sample.
+
+A local run uses the same order. Replace the token and host before running it:
+
+```bash
+dotnet tool restore
+dotnet tool run dotnet-sonarscanner -- begin /k:"DepthCharts" /d:sonar.token="<token>" /d:sonar.host.url="<host>" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
+dotnet build DepthCharts.slnx --configuration Release --no-incremental --disable-build-servers
+dotnet test DepthCharts.slnx --configuration Release --no-build --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+dotnet tool run dotnet-sonarscanner -- end /d:sonar.token="<token>"
+```
 
 ## Run the sample
 
@@ -258,7 +288,8 @@ A review of the library against the challenge, constitution, specification, and 
 | `tests/DepthCharts.Unit.Tests` | Unit tests for one type or one operation |
 | `tests/DepthCharts.Integration.Tests` | Acceptance tests that combine the public operations |
 | `specs/001-manage-depth-chart` | Specification, plan, and tasks |
-| `.github/workflows/ci.yml` | Build and test workflow |
+| `.github/workflows/ci.yml` | Build, test, and SonarQube analysis |
+| `dotnet-tools.json` | Local SonarScanner for .NET |
 | `docs/DepthChartChallenge.md` | Original challenge |
 | `docs/code-review.md` | Review notes |
 

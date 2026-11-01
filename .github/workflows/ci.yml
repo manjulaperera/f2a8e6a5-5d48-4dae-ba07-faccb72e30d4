@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,23 +17,102 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
+      - name: Check SonarQube configuration
+        id: sonar
+        env:
+          SONAR_ENABLED: ${{ vars.SONAR_ENABLED }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: |
+          if [ "$SONAR_ENABLED" != "true" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "SonarQube is disabled. Set the SONAR_ENABLED variable to true to run analysis."
+            exit 0
+          fi
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+            echo "SonarQube is enabled, but SONAR_TOKEN or SONAR_HOST_URL is missing."
+            exit 1
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Java
+        if: steps.sonar.outputs.ready == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Begin SonarQube analysis
+        if: steps.sonar.outputs.ready == 'true'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          key="${SONAR_PROJECT_KEY:-DepthCharts}"
+          begin_args=(
+            begin
+            "/k:${key}"
+            "/n:Depth Charts"
+            "/d:sonar.token=${SONAR_TOKEN}"
+            "/d:sonar.host.url=${SONAR_HOST_URL}"
+            /d:sonar.qualitygate.wait=true
+            /d:sonar.scanner.scanAll=false
+            "/d:sonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.opencover.xml"
+            "/d:sonar.coverage.exclusions=src/DepthCharts.Console/**"
+          )
+          if [ -n "${SONAR_ORGANIZATION:-}" ]; then
+            begin_args+=("/o:${SONAR_ORGANIZATION}")
+          fi
+          dotnet tool restore
+          dotnet tool run dotnet-sonarscanner -- "${begin_args[@]}"
+
       - name: Restore
         run: dotnet restore DepthCharts.slnx
 
       - name: Build
-        run: dotnet build DepthCharts.slnx --no-restore --configuration Release --warnaserror
+        run: |
+          set -euo pipefail
+          extra=()
+          if [ "${{ steps.sonar.outputs.ready }}" = "true" ]; then
+            extra+=(--no-incremental --disable-build-servers)
+          fi
+          dotnet build DepthCharts.slnx --no-restore --configuration Release --warnaserror "${extra[@]}"
 
       - name: Verify formatting
         run: dotnet format DepthCharts.slnx --verify-no-changes --no-restore
 
       - name: Unit tests
-        run: dotnet test tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj --configuration Release --no-build --no-restore
+        run: |
+          set -euo pipefail
+          coverage=()
+          if [ "${{ steps.sonar.outputs.ready }}" = "true" ]; then
+            coverage=(--collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover)
+          fi
+          dotnet test tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj --configuration Release --no-build --no-restore "${coverage[@]}"
 
       - name: Integration tests
-        run: dotnet test tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj --configuration Release --no-build --no-restore
+        run: |
+          set -euo pipefail
+          coverage=()
+          if [ "${{ steps.sonar.outputs.ready }}" = "true" ]; then
+            coverage=(--collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover)
+          fi
+          dotnet test tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj --configuration Release --no-build --no-restore "${coverage[@]}"
+
+      - name: End SonarQube analysis
+        if: steps.sonar.outputs.ready == 'true'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet tool run dotnet-sonarscanner -- end "/d:sonar.token=${SONAR_TOKEN}"
