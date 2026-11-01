@@ -27,6 +27,21 @@ Players below Alice at WR are `1, 3`.
 
 Operations, edge cases, and a C# example are in [`docs/behaviour.md`](docs/behaviour.md). Storage and complexity are in [`docs/architecture.md`](docs/architecture.md).
 
+## Out of scope
+
+The challenge asks for the depth-chart library, its tests, and instructions to build and run it. These stay out of the solution:
+
+1. A database or any saved chart. Rankings last only for the life of one `DepthChartService`.
+2. A web API or other network endpoint.
+3. A graphical user interface. The console only calls the library and prints the result.
+4. A faster index or other structure for large charts.
+5. Sport-specific ranking code, or one service that holds many charts. A new sport is another `SportDefinition` and another `DepthChartService`.
+6. Continuous deployment. GitHub Actions builds and tests. It does not deploy.
+7. Application logging, metrics, or tracing.
+8. Authentication and access control.
+9. Notifications when a ranking changes.
+10. A dependency-injection container and extra projects for application layers.
+
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
