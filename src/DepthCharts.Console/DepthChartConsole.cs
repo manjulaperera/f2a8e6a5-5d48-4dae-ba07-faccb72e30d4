@@ -1,5 +1,7 @@
 using DepthCharts;
 
+namespace DepthCharts.ConsoleHost;
+
 internal static class DepthChartConsole
 {
     public static int Run(TextReader input, TextWriter output, TextWriter error)
@@ -182,7 +184,7 @@ internal static class DepthChartConsole
             return true;
         }
 
-        private bool PlayerFromMenu(
+        private static bool PlayerFromMenu(
             string[] parts,
             TextReader input,
             TextWriter output,
