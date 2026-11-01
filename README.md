@@ -1,8 +1,8 @@
 # Depth Chart Management
 
 [![Build and Test](https://github.com/manjulaperera/f2a8e6a5-5d48-4dae-ba07-faccb72e30d4/actions/workflows/ci.yml/badge.svg)](https://github.com/manjulaperera/f2a8e6a5-5d48-4dae-ba07-faccb72e30d4/actions/workflows/ci.yml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DepthCharts&metric=alert_status)](https://sonarcloud.io/summary/overall?id=DepthCharts)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DepthCharts&metric=coverage)](https://sonarcloud.io/summary/overall?id=DepthCharts)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=manjulaperera_4072c526-95a1-451d-816a-53cf61cf9e34&metric=alert_status)](https://sonarcloud.io/summary/overall?id=manjulaperera_4072c526-95a1-451d-816a-53cf61cf9e34)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=manjulaperera_4072c526-95a1-451d-816a-53cf61cf9e34&metric=coverage)](https://sonarcloud.io/summary/overall?id=manjulaperera_4072c526-95a1-451d-816a-53cf61cf9e34)
 
 A .NET 10 class library that ranks players by position for a team sport. It implements the four depth-chart operations from the coding challenge for NFL and MLB, and accepts another sport by configuration.
 
