@@ -33,7 +33,7 @@ public class ConsoleHostTests
     }
 
     [Fact]
-    public async Task Given_an_unknown_position_When_the_console_adds_a_player_Then_it_prints_the_library_error()
+    public async Task Given_an_unknown_position_When_the_console_adds_a_player_Then_it_names_the_chart_position()
     {
         var output = await RunAsync(
             """
@@ -41,7 +41,41 @@ public class ConsoleHostTests
             quit
             """);
 
-        output.Should().Be("Error: Position is not supported. (Parameter 'position')");
+        output.Should().Be("Error: Chart position 'XX' is not supported.");
+    }
+
+    [Fact]
+    public async Task Given_a_blank_depth_and_an_unknown_position_When_the_menu_adds_a_player_Then_it_names_the_chart_position()
+    {
+        var output = await RunAsync(
+            """
+            1
+            1
+            Bob
+            WR
+            XX
+
+            quit
+            """);
+
+        output.Should().Be("Error: Chart position 'XX' is not supported.");
+    }
+
+    [Fact]
+    public async Task Given_a_blank_chart_position_When_the_menu_adds_a_player_Then_it_says_the_chart_position_is_required()
+    {
+        var output = await RunAsync(
+            """
+            1
+            1
+            Bob
+            WR
+
+
+            quit
+            """);
+
+        output.Should().Be("Error: Chart position is required.");
     }
 
     [Fact]

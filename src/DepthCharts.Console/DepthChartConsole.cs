@@ -314,7 +314,7 @@ internal static class DepthChartConsole
             }
             catch (ArgumentException exception)
             {
-                WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
+                WriteLibraryError(output, exception, parts[4]);
             }
         }
 
@@ -332,7 +332,7 @@ internal static class DepthChartConsole
             }
             catch (ArgumentException exception)
             {
-                WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
+                WriteLibraryError(output, exception, position);
             }
         }
 
@@ -350,7 +350,7 @@ internal static class DepthChartConsole
             }
             catch (ArgumentException exception)
             {
-                WriteMessage(output, $"Error: {exception.Message}", ConsoleColor.Red);
+                WriteLibraryError(output, exception, position);
             }
         }
 
@@ -441,6 +441,19 @@ internal static class DepthChartConsole
             WriteColored(error, "sport <name> <code,code>", ConsoleColor.Gray);
             WriteColored(error, "A name is one word. Use - when there is no natural position.", ConsoleColor.DarkGray);
         }
+
+        private static void WriteLibraryError(TextWriter output, ArgumentException exception, string chartPosition)
+        {
+            var message = exception.Message.StartsWith("Position is not supported.", StringComparison.Ordinal)
+                ? DescribeChartPosition(chartPosition)
+                : exception.Message;
+            WriteMessage(output, $"Error: {message}", ConsoleColor.Red);
+        }
+
+        private static string DescribeChartPosition(string position) =>
+            string.IsNullOrWhiteSpace(position)
+                ? "Chart position is required."
+                : $"Chart position '{position}' is not supported.";
 
         private static void WriteMessage(TextWriter output, string text, ConsoleColor color)
         {
