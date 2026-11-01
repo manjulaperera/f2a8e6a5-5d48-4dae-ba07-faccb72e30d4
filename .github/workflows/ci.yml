@@ -70,7 +70,7 @@ jobs:
             /d:sonar.qualitygate.wait=true
             /d:sonar.scanner.scanAll=false
             "/d:sonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.opencover.xml"
-            "/d:sonar.coverage.exclusions=src/DepthCharts.Console/**"
+            "/d:sonar.coverage.exclusions=src/DepthCharts.Console/**/*"
           )
           if [ -n "${SONAR_ORGANIZATION:-}" ]; then
             begin_args+=("/o:${SONAR_ORGANIZATION}")
@@ -98,18 +98,18 @@ jobs:
           set -euo pipefail
           coverage=()
           if [ "${{ steps.sonar.outputs.ready }}" = "true" ]; then
-            coverage=(--collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover)
+            coverage=(--collect:"XPlat Code Coverage")
           fi
-          dotnet test tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj --configuration Release --no-build --no-restore "${coverage[@]}"
+          dotnet test tests/DepthCharts.Unit.Tests/DepthCharts.Unit.Tests.csproj --configuration Release --no-build --no-restore --settings coverage.runsettings "${coverage[@]}"
 
       - name: Integration tests
         run: |
           set -euo pipefail
           coverage=()
           if [ "${{ steps.sonar.outputs.ready }}" = "true" ]; then
-            coverage=(--collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover)
+            coverage=(--collect:"XPlat Code Coverage")
           fi
-          dotnet test tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj --configuration Release --no-build --no-restore "${coverage[@]}"
+          dotnet test tests/DepthCharts.Integration.Tests/DepthCharts.Integration.Tests.csproj --configuration Release --no-build --no-restore --settings coverage.runsettings "${coverage[@]}"
 
       - name: End SonarQube analysis
         if: steps.sonar.outputs.ready == 'true'

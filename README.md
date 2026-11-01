@@ -55,7 +55,7 @@ Position codes match exactly, including capitalisation. `wr` is not `WR`.
 
 ## Architecture
 
-The production library is `src/DepthCharts`. `src/DepthCharts.Console` runs the published sample against that library. Unit tests are `tests/DepthCharts.Unit.Tests`. Integration and acceptance tests are `tests/DepthCharts.Integration.Tests`. The solution file is `DepthCharts.slnx`.
+The production library is `src/DepthCharts`. `src/DepthCharts.Console` is an interactive host for calling that library. Unit tests are `tests/DepthCharts.Unit.Tests`. Integration and acceptance tests are `tests/DepthCharts.Integration.Tests`. The solution file is `DepthCharts.slnx`.
 
 | Type | Responsibility |
 | --- | --- |
@@ -153,33 +153,52 @@ Optional variables:
 - `SONAR_PROJECT_KEY`, default `DepthCharts`. Create the project in SonarQube with this key before the first analysis. The badges at the top use this key on SonarQube Cloud.
 - `SONAR_ORGANIZATION`, required for SonarQube Cloud and omitted for SonarQube Server.
 
-When analysis is enabled, the workflow starts the scanner, builds `DepthCharts.slnx`, runs both test projects with Coverlet OpenCover reports, and waits for the quality gate. Test projects are marked `SonarQubeTestProject`. Coverage for `src/DepthCharts.Console` is excluded because that project only prints the published sample.
+When analysis is enabled, the workflow starts the scanner, builds `DepthCharts.slnx`, runs both test projects with Coverlet OpenCover reports, and waits for the quality gate. Test projects are marked `SonarQubeTestProject`. Coverage excludes `src/DepthCharts.Console`. That project is a host for trying the library, and the coverage gate measures the library. Coverlet excludes the `DepthCharts.Console` assembly in `coverage.runsettings`. SonarQube excludes `src/DepthCharts.Console/**/*`.
 
 A local run uses the same order. Replace the token and host before running it:
 
 ```bash
 dotnet tool restore
-dotnet tool run dotnet-sonarscanner -- begin /k:"DepthCharts" /d:sonar.token="<token>" /d:sonar.host.url="<host>" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
+dotnet tool run dotnet-sonarscanner -- begin /k:"DepthCharts" /d:sonar.token="<token>" /d:sonar.host.url="<host>" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" /d:sonar.coverage.exclusions="src/DepthCharts.Console/**/*"
 dotnet build DepthCharts.slnx --configuration Release --no-incremental --disable-build-servers
-dotnet test DepthCharts.slnx --configuration Release --no-build --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+dotnet test DepthCharts.slnx --configuration Release --no-build --settings coverage.runsettings --collect:"XPlat Code Coverage"
 dotnet tool run dotnet-sonarscanner -- end /d:sonar.token="<token>"
 ```
 
-## Run the sample
+## Use the console
 
 ```bash
 dotnet run --project src/DepthCharts.Console
 ```
 
-The console calls the library with the published adds and prints:
+The session starts as an NFL chart and reads commands from standard input. Results are printed on standard output. The prompt is on standard error. Ranking stays in `DepthChartService`. The console only parses a command and calls the library.
 
 ```text
-WR: [2, 1, 3]
-KR: [1]
-[1, 3]
+sport nfl|mlb
+sport <name> <code,code>
+add <id> <name> <naturalPosition> <position> [depth]
+remove <id> <position>
+chart
+below <id> <position>
+help
+quit
 ```
 
-The last line is the players below Alice at WR. The console does not implement ranking rules.
+Use `-` as the natural position when the player has none. `remove` and `below` use a player id added in the same session. A name is one word. A custom sport replaces the chart and drops the players stored for this session.
+
+The published sample is:
+
+```text
+add 1 Bob WR WR 0
+add 2 Alice WR WR 0
+add 3 Charlie WR WR 2
+add 1 Bob WR KR
+chart
+below 2 WR
+quit
+```
+
+`chart` then prints `WR: [2, 1, 3]` and `KR: [1]`. `below 2 WR` prints `[1, 3]`.
 
 ## Test
 
@@ -284,7 +303,8 @@ A review of the library against the challenge, constitution, specification, and 
 | Path | Contents |
 | --- | --- |
 | `src/DepthCharts` | Production library |
-| `src/DepthCharts.Console` | Console host for the published sample |
+| `src/DepthCharts.Console` | Interactive console for calling the library |
+| `coverage.runsettings` | Coverlet settings that exclude the console |
 | `tests/DepthCharts.Unit.Tests` | Unit tests for one type or one operation |
 | `tests/DepthCharts.Integration.Tests` | Acceptance tests that combine the public operations |
 | `specs/001-manage-depth-chart` | Specification, plan, and tasks |
