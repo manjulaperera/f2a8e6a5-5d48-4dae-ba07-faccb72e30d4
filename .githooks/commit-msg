@@ -1,0 +1,14 @@
+#!/bin/sh
+# Remove AI co-author trailers. Attribution stays with the human author.
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+tmp="${msg_file}.strip"
+grep -i -E -v '^[[:space:]]*Co-authored-by:.*(cursor|copilot|claude|chatgpt|openai|gemini|codeium|tabnine)' "$msg_file" > "$tmp"
+status=$?
+if [ "$status" -gt 1 ]; then
+  rm -f "$tmp"
+  exit 0
+fi
+mv "$tmp" "$msg_file"
+exit 0
