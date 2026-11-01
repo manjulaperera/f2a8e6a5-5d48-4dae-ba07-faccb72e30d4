@@ -28,12 +28,12 @@ public sealed class DepthChartService : IDepthChartService
 
         if (!_rankings.TryGetValue(position, out var ranking))
         {
-            throw NotRanked(player);
+            throw NotRanked();
         }
 
         if (!ranking.Remove(player))
         {
-            throw NotRanked(player);
+            throw NotRanked();
         }
 
         if (ranking.Count == 0)
@@ -66,13 +66,13 @@ public sealed class DepthChartService : IDepthChartService
 
         if (!_rankings.TryGetValue(position, out var ranking))
         {
-            throw NotRanked(player);
+            throw NotRanked();
         }
 
         var index = ranking.FindIndex(rankedPlayer => rankedPlayer.PlayerId == player.PlayerId);
         if (index < 0)
         {
-            throw NotRanked(player);
+            throw NotRanked();
         }
 
         return ranking.Skip(index + 1).Select(rankedPlayer => rankedPlayer.PlayerId).ToList();
@@ -125,8 +125,8 @@ public sealed class DepthChartService : IDepthChartService
             : count;
     }
 
-    private static ArgumentException NotRanked(Player player)
+    private static ArgumentException NotRanked()
     {
-        return new ArgumentException("Player is not ranked at this position.", nameof(player));
+        return new ArgumentException("Player is not ranked at this position.", "player");
     }
 }
